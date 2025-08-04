@@ -6,12 +6,13 @@ from pytrends.request import TrendReq
 from newsapi import NewsApiClient
 from dotenv import load_dotenv
 load_dotenv()
+
 st.set_page_config(
-    page_title="Market Sentiment Dashboard (Buffett Style)",
+    page_title="Market Sentiment Dashboard (Buffett & Tom Lee)",
     layout="wide",
 )
-st.title("📊 Market Sentiment Dashboard (Buffett Style)")
-st.caption("Signal logic: Buy only when others are fearful, wait or accumulate when neutral, avoid when euphoric. Powered by VIX, RSI, Google Trends, News Sentiment.")
+st.title("📊 Market Sentiment Dashboard")
+st.caption("See how Buffett and Tom Lee might interpret current risk signals. Powered by VIX, RSI, Google Trends, News Sentiment.")
 st.markdown("---")
 
 # --- Data Functions ---
@@ -88,7 +89,7 @@ for col, (name, val, lbl, desc) in zip(cols, metrics):
         with st.expander(f"ℹ️ What is {name}?"):
             st.write(desc)
 
-# --- Buffett/CFP-Style Signal Logic ---
+# --- Buffett-Style Signal Logic ---
 def buffett_style_signal(vix, rsi, trends, news):
     fear_count = 0
     if vix is not None and vix > 28: fear_count += 1
@@ -96,33 +97,59 @@ def buffett_style_signal(vix, rsi, trends, news):
     if news is not None and news < 35: fear_count += 1
 
     if rsi is not None and rsi < 35 and fear_count >= 2:
-        return "🟢 Really Good Time to Buy (Buffett-style: Be Greedy When Others Are Fearful)"
+        return "🟢 Buffett: Really Good Time to Buy (Be Greedy When Others Are Fearful)"
 
     if rsi is not None and rsi < 40 and fear_count >= 1:
-        return "🟡 Good Time to Accumulate, Be Patient"
+        return "🟡 Buffett: Good Time to Accumulate, Be Patient"
 
     if (
         rsi is not None and 40 <= rsi <= 60
         and vix is not None and 16 < vix < 28
         and news is not None and 35 <= news <= 65
     ):
-        return "⚪ Wait, Stay Patient (No Edge)"
+        return "⚪ Buffett: Wait, Stay Patient (No Edge)"
 
     if (
         rsi is not None and rsi > 70
         and news is not None and news > 60
         and trends is not None and trends < 20
     ):
-        return "🔴 Caution: Market Overheated, Wait for Pullback"
+        return "🔴 Buffett: Market Overheated, Wait for Pullback"
 
-    return "🔴 Caution: Hold Off (No Opportunity Detected)"
+    return "🔴 Buffett: Hold Off (No Opportunity Detected)"
 
-st.markdown("## 🧭 Long-Term Investor Signal")
+# --- Tom Lee (Fundstrat) Signal Logic ---
+def tomlee_signal(vix, rsi, trends, news):
+    # Tom Lee: More tactical, buy-the-dip, less strict than Buffett
+    bullish_score = 0
+    if vix is not None and vix > 22: bullish_score += 1
+    if rsi is not None and rsi < 45: bullish_score += 1
+    if trends is not None and trends > 60: bullish_score += 1
+    if news is not None and news < 50: bullish_score += 1
+
+    if bullish_score >= 2:
+        return "🟢 Tom Lee: Good Time to Buy (Buy the Dip Mentality)"
+    if vix is not None and vix < 14 and rsi is not None and rsi > 70 and news is not None and news > 60:
+        return "🔴 Tom Lee: Even Tom Lee says: Hold Off, Too Hot!"
+    return "⚪ Tom Lee: Stay Invested or Accumulate Slowly"
+
+# --- Buffett Tracker ---
+st.markdown("## 🧭 Buffett-Style Long-Term Investor Signal")
 st.success(buffett_style_signal(vix_val, rsi_val, trends_val, news_val))
+with st.expander("Buffett Philosophy"):
+    st.markdown("> *Be fearful when others are greedy, and greedy when others are fearful.*  \n— Warren Buffett")
+
+# --- Tom Lee Tracker ---
+st.markdown("## 📈 Tom Lee (Fundstrat) Tactical Signal")
+st.info(tomlee_signal(vix_val, rsi_val, trends_val, news_val))
+with st.expander("Tom Lee Style"):
+    st.markdown("> *When everyone is cautious, that’s when opportunity strikes. The market often climbs a wall of worry.*  \n— Tom Lee (Fundstrat, paraphrased)")
 
 st.markdown("---")
 st.markdown("### ⚠️ Disclaimer")
-st.warning("For educational purposes only. Not financial advice. Use at your own risk. Buffett-style signals use sentiment, volatility, and momentum for education — not for trading or portfolio management.")
+st.warning(
+    "For educational purposes only. Not financial advice. Use at your own risk. These signals use sentiment, volatility, and momentum for illustration only — not for trading or portfolio management."
+)
 
 if st.button("🔄 Refresh Data"):
     st.rerun()
