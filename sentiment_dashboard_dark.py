@@ -257,5 +257,19 @@ if memes:
     st.caption("Top tickers in r/wallstreetbets in the last day. ⚠️ Not investment advice.", unsafe_allow_html=True)
 else:
     st.caption("No trending meme tickers found. Either r/WSB is quiet, API is slow, or it's just a boring day. 😉", unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html
+st.markdown('</div>', unsafe_allow_html=True)
+
+# --- Disclaimer Collapsible ---
+with st.expander("⚠️ Disclaimer (Tap to expand)", expanded=False):
+    st.markdown("""
+    <div class='disclaimer-pro'>
+    <b>For educational purposes only. Not financial advice. Use at your own risk.</b>
+    These signals use sentiment, volatility, and momentum for illustration only — not for trading or portfolio management.<br>
+    <b>Legal Notice:</b> This dashboard is for general informational purposes and does not create a client relationship. Always consult your licensed advisor before acting.
+    </div>
+    """, unsafe_allow_html=True)
+
+# --- Refresh Button ---
+if st.button("🔄 Refresh Data"):
+    st.rerun()
 
