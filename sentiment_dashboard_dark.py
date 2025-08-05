@@ -250,5 +250,31 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Meme Stock Radar Card ---
 st.markdown('<div class="datacard meme-card">', unsafe_allow_html=True)
-st.markdown('<div class="signal-head">🚀 Meme Stock Radar <span class="badge badge-blue">(WSB Hotlist)</span></div>', unsafe_allow_html=True
+st.markdown('<div class="signal-head">🚀 Meme Stock Radar <span class="badge badge-blue">(WSB Hotlist)</span></div>', unsafe_allow_html=True)
+if memes:
+    for i, (ticker, n) in enumerate(memes):
+        pct = get_price_change(ticker)
+        change = f"<span style='color:{'#19bb77' if pct and pct>0 else '#e44b5a'}; font-weight:700;'>{pct:+.2f}%</span>" if pct is not None else ""
+        fire = "🔥" if i==0 and pct and pct > 10 else ""
+        st.markdown(f"<b>{ticker}</b>: {n} mentions {change} {fire}", unsafe_allow_html=True)
+    st.caption("Top tickers in r/wallstreetbets (last ~24hr). ⚠️ Not investment advice.", unsafe_allow_html=True)
+else:
+    st.caption("No trending meme tickers found. WSB may be quiet or Reddit API was rate-limited.", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# --- Disclaimer Collapsible ---
+with st.expander("⚠️ Disclaimer (Tap to expand)", expanded=False):
+    st.markdown("""
+    <div class='disclaimer-pro'>
+    <b>For educational purposes only. Not financial advice. Use at your own risk.</b>
+    These signals use sentiment, volatility, and momentum for illustration only — not for trading or portfolio management.<br>
+    <b>Legal Notice:</b> This dashboard is for general informational purposes and does not create a client relationship. Always consult your licensed advisor before acting.
+    </div>
+    """, unsafe_allow_html=True)
+
+# --- Refresh Button ---
+st.markdown('<div class="refresh-button">', unsafe_allow_html=True)
+if st.button("🔄 Refresh Data"):
+    st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
 
