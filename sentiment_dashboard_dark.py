@@ -5,48 +5,49 @@ from ta.momentum import RSIIndicator
 from pytrends.request import TrendReq
 from newsapi import NewsApiClient
 from dotenv import load_dotenv
-import plotly.graph_objects as go
 import requests
 import re
 from collections import Counter
 
 load_dotenv()
 st.set_page_config(
-    page_title="Market Sentiment Dashboard (Pro)",
+    page_title="Market Sentiment Dashboard (Minimalist)",
     layout="wide",
 )
 
-# --- Modern Minimal CSS ---
+# --- Custom CSS ---
 st.markdown("""
     <style>
     html, body, [class*="css"]  { font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important; background: #f7f9fb; }
-    .big-metric { font-size: 2.15rem !important; font-weight: 800; margin: 0.18em 0 0.2em 0;}
-    .signal-card { background: #fff; border-radius: 1.1em; box-shadow: 0 3px 20px 0 rgba(40,55,70,0.06);
-        padding: 1.2em 1.2em 0.5em 1.5em; margin-bottom: 1.3em; border-left: 7px solid #cfd8df;}
+    .big-num { font-size: 2.2rem !important; font-weight: 800; margin: 0 0 0.06em 0;}
+    .small-label { font-size: 1.09rem !important; color: #8592A6; }
+    .datacard { background: #fff; border-radius: 1.1em; box-shadow: 0 3px 18px 0 rgba(40,55,70,0.06);
+        padding: 1.2em 1.5em 1.1em 1.4em; margin-bottom: 0.7em;}
+    .buffett-card { border-left: 7px solid #16BF6C; }
     .tomlee-card { border-left: 7px solid #225DF1; }
-    .buffett-card { border-left: 7px solid #19bb77; }
-    .signal-label { font-size: 1.07rem; font-weight: 700; color: #33465f; margin-bottom: 0.18em;}
-    .refresh-button button { background: #225DF1 !important; color: white !important; font-weight: 700 !important;
-        border-radius: 1.3em !important; padding: 0.4em 2.2em !important; margin-top: 0.5em; margin-bottom: 1em;}
-    .metric-title { font-size: 1rem !important; color: #6B7683; margin-bottom: -0.45em; margin-top: 1.3em; }
-    .stProgress .st-bo { height: 20px !important; border-radius: 8px !important;}
-    .stPlotlyChart { margin-bottom: -1.4em !important; }
-    .disclaimer-pro { font-size: 0.99rem; color: #b08911; background: #fff7e6;
-        border-radius: 0.7em; margin-top: 1.6em; padding: 0.55em 1em 0.55em 1.1em; border: 1px solid #f5e4c6;}
-    .stExpanderHeader { font-weight: 700; color: #b08911; font-size:1.05rem;}
+    .meme-card { border-left: 7px solid #FCAA4A;}
+    .bar {height: 13px; background: #e8ecf2; border-radius: 7px; margin: 0.3em 0 1em 0; overflow: hidden;}
+    .bar-inner {height: 100%; border-radius: 7px;}
+    .badge { display:inline-block; font-size:0.95em; font-weight:600; padding:0.19em 0.8em; border-radius:1em; }
+    .badge-green { background: #e4faef; color: #19bb77;}
+    .badge-yellow { background: #FFF4DC; color: #F6B100;}
+    .badge-red { background: #ffefef; color: #e44b5a;}
+    .badge-blue { background: #e5f1ff; color: #225DF1;}
+    .caption { color: #a5a7ab; font-size: 0.99em; margin-top: -0.2em; }
+    .signal-head { font-weight: 700; font-size: 1.13rem; }
     </style>
 """, unsafe_allow_html=True)
 
 # ---- Page Title ----
 st.markdown("""
     <div style="display:flex;align-items:center;">
-        <img src="https://img.icons8.com/color/40/000000/combo-chart--v2.png" width="34" style="margin-right: 11px;"/>
-        <span style="font-size:1.52rem;font-weight:900;letter-spacing:-1px;">Market Sentiment Dashboard</span>
+        <img src="https://img.icons8.com/color/40/000000/combo-chart--v2.png" width="33" style="margin-right: 11px;"/>
+        <span style="font-size:1.47rem;font-weight:900;letter-spacing:-1px;">Market Sentiment Dashboard</span>
     </div>
     <div style="font-size:1.01rem;color:#6d7893;margin-top:0.18em;">
-        Modern risk snapshot inspired by Buffett and Tom Lee.<br>
+        Minimalist market snapshot inspired by Buffett & Tom Lee.<br>
         <span style="color:#A5AEBC;font-size:0.97rem;">
-            Powered by VIX, RSI, Google Trends, News.
+            Powered by VIX, RSI, Google Trends, News. 
         </span>
     </div>
 """, unsafe_allow_html=True)
@@ -58,7 +59,6 @@ def fetch_vix():
         vix = round(df["Close"].iloc[-1], 2)
         return vix
     except Exception as e:
-        st.error(f"VIX data unavailable: {e}")
         return None
 
 def fetch_rsi():
@@ -68,7 +68,6 @@ def fetch_rsi():
         rsi = round(df["rsi"].iloc[-1], 2)
         return rsi
     except Exception as e:
-        st.error(f"RSI data unavailable: {e}")
         return None
 
 def fetch_google_trends(term="stock market crash"):
@@ -79,13 +78,11 @@ def fetch_google_trends(term="stock market crash"):
         val = int(df[term].iloc[-1])
         return val
     except Exception as e:
-        st.warning(f"Google Trends not available: {e}")
         return None
 
 def fetch_news_sentiment():
     key = os.getenv("NEWSAPI_KEY", "")
     if not key:
-        st.warning("No NewsAPI key found. Set NEWSAPI_KEY environment variable.")
         return None, "No API Key"
     try:
         na = NewsApiClient(api_key=key)
@@ -98,17 +95,18 @@ def fetch_news_sentiment():
         lbl = "Bullish" if score > 60 else "Bearish" if score < 40 else "Mixed"
         return score, lbl
     except Exception as e:
-        st.warning(f"NewsAPI error: {e}")
+        # Show error but don't break layout
+        msg = str(e)
+        if "rateLimited" in msg or "Too Many Requests" in msg:
+            return None, "Rate Limited"
         return None, "Error"
 
-# --- Meme Stock Radar ---
 def fetch_pushshift_wsb_tickers(limit=500):
     url = f"https://api.pushshift.io/reddit/search/submission/?subreddit=wallstreetbets&size={limit}&fields=title,selftext"
     try:
         r = requests.get(url, timeout=10)
         data = r.json().get('data', [])
         texts = [d.get('title', '') + " " + d.get('selftext', '') for d in data]
-        # Extract $TICKER or all-caps tickers
         pat = re.compile(r'\$?([A-Z]{2,5})\b')
         exclude = {"USD", "WSB", "ETF", "IPO", "SPAC", "CEO", "DD", "FOMO", "ATH", "LOL", "TOS"}
         mentions = []
@@ -119,7 +117,6 @@ def fetch_pushshift_wsb_tickers(limit=500):
         counts = Counter(mentions)
         return counts.most_common(5)
     except Exception as e:
-        st.warning(f"Could not load meme tickers: {e}")
         return []
 
 def get_price_change(ticker):
@@ -138,82 +135,65 @@ rsi_val = fetch_rsi()
 trends_val = fetch_google_trends()
 news_val, news_lbl = fetch_news_sentiment()
 
-# --- Minimalist Modern Plotly Dials ---
-def modern_gauge(title, value, minval, maxval, thresholds, colorbands, maincolor="#1967D2"):
+# --- Mini Helper for colored badges ---
+def colored_badge(value, label):
     if value is None:
-        value = minval
-        number = {'prefix': '-- '}
-    else:
-        number = {'valueformat': '.1f'}
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=value,
-        number=number,
-        title={'text': title, 'font': {'size': 16, 'color': '#344055'}},
-        gauge={
-            'axis': {'range': [minval, maxval], 'tickwidth': 1.1, 'tickcolor': "#aaa", 'tickfont': {'size': 13}},
-            'bar': {'color': maincolor, 'thickness': 0.22},
-            'bgcolor': "#f7f9fb",
-            'steps': [{'range': rng, 'color': col} for rng, col in colorbands],
-            'threshold': {'line': {'color': maincolor, 'width': 2.4}, 'thickness': 0.7, 'value': value},
-        }
-    ))
-    fig.update_layout(margin=dict(l=6, r=6, t=35, b=10), height=190)
-    return fig
+        return f"<span class='badge badge-red'>N/A</span>"
+    if label.lower() == "vix":
+        if value > 30: return f"<span class='badge badge-red'>High</span>"
+        elif value > 20: return f"<span class='badge badge-yellow'>Elevated</span>"
+        else: return f"<span class='badge badge-green'>Calm</span>"
+    if label.lower() == "rsi":
+        if value > 70: return f"<span class='badge badge-red'>Overbought</span>"
+        elif value < 35: return f"<span class='badge badge-blue'>Oversold</span>"
+        else: return f"<span class='badge badge-green'>Normal</span>"
+    if label.lower() == "google":
+        if value > 70: return f"<span class='badge badge-red'>High Search</span>"
+        elif value > 30: return f"<span class='badge badge-yellow'>Moderate</span>"
+        else: return f"<span class='badge badge-green'>Low</span>"
+    if label.lower() == "news":
+        if news_lbl == "Bullish": return f"<span class='badge badge-green'>Bullish</span>"
+        if news_lbl == "Bearish": return f"<span class='badge badge-red'>Bearish</span>"
+        return f"<span class='badge badge-yellow'>Mixed</span>"
+    return ""
 
-cols = st.columns(4)
-with cols[0]:
-    st.plotly_chart(modern_gauge(
-        "VIX (Volatility)", vix_val, 10, 40,
-        thresholds=[18, 25, 32],
-        colorbands=[
-            ([10, 18], "#ffe7eb"),
-            ([18, 25], "#FFF6C7"),
-            ([25, 32], "#E3F9D3"),
-            ([32, 40], "#c8e8fa")
-        ],
-        maincolor="#6043ff"
-    ), use_container_width=True)
-    st.caption("<span style='color:#83899c;'>30+ = Elevated Fear</span>", unsafe_allow_html=True)
-with cols[1]:
-    st.plotly_chart(modern_gauge(
-        "RSI (S&P 500)", rsi_val, 10, 90,
-        thresholds=[30, 50, 70],
-        colorbands=[
-            ([10, 30], "#FFE9DC"),
-            ([30, 50], "#F3F7F5"),
-            ([50, 70], "#DEF8ED"),
-            ([70, 90], "#f4e1e8")
-        ],
-        maincolor="#16bf6c"
-    ), use_container_width=True)
-    st.caption("<span style='color:#83899c;'>&gt;70 Overbought / &lt;35 Oversold</span>", unsafe_allow_html=True)
-with cols[2]:
-    st.plotly_chart(modern_gauge(
-        "Google Trends", trends_val, 0, 100,
-        thresholds=[30, 60, 80],
-        colorbands=[
-            ([0, 30], "#FFF3C1"),
-            ([30, 60], "#F2F8FE"),
-            ([60, 80], "#DEF8ED"),
-            ([80, 100], "#FFE7E7")
-        ],
-        maincolor="#FCAA4A"
-    ), use_container_width=True)
-    st.caption("<span style='color:#83899c;'>Search: 'market crash'</span>", unsafe_allow_html=True)
-with cols[3]:
-    st.plotly_chart(modern_gauge(
-        "News Sentiment", news_val, 0, 100,
-        thresholds=[30, 50, 70],
-        colorbands=[
-            ([0, 30], "#FFE3D8"),
-            ([30, 50], "#D4F0FF"),
-            ([50, 70], "#E3F9D3"),
-            ([70, 100], "#FDEBF9")
-        ],
-        maincolor="#3664F6"
-    ), use_container_width=True)
-    st.caption("<span style='color:#83899c;'>Headline Tone</span>", unsafe_allow_html=True)
+# --- Display Data as Cards ---
+with st.container():
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown("<div class='datacard'><span class='small-label'>VIX (Volatility)</span><br>"
+                    f"<span class='big-num'>{vix_val if vix_val is not None else '--'}</span> "
+                    f"{colored_badge(vix_val, 'vix')}"
+                    "<div class='caption'>30+ = High Fear</div></div>", unsafe_allow_html=True)
+        if vix_val is not None:
+            pct = int(min(max((vix_val-10)/(40-10)*100, 0), 100))
+            st.markdown(f"<div class='bar'><div class='bar-inner' style='width:{pct}%;background:#19bb77;'></div></div>", unsafe_allow_html=True)
+    with c2:
+        st.markdown("<div class='datacard'><span class='small-label'>RSI (S&P 500)</span><br>"
+                    f"<span class='big-num'>{rsi_val if rsi_val is not None else '--'}</span> "
+                    f"{colored_badge(rsi_val, 'rsi')}"
+                    "<div class='caption'>&gt;70 Overbought / &lt;35 Oversold</div></div>", unsafe_allow_html=True)
+        if rsi_val is not None:
+            pct = int(min(max((rsi_val-10)/(90-10)*100, 0), 100))
+            st.markdown(f"<div class='bar'><div class='bar-inner' style='width:{pct}%;background:#225DF1;'></div></div>", unsafe_allow_html=True)
+    with c3:
+        st.markdown("<div class='datacard'><span class='small-label'>Google Trends</span><br>"
+                    f"<span class='big-num'>{trends_val if trends_val is not None else '--'}</span> "
+                    f"{colored_badge(trends_val, 'google')}"
+                    "<div class='caption'>Search: 'market crash'</div></div>", unsafe_allow_html=True)
+        if trends_val is not None:
+            pct = int(min(max(trends_val, 0), 100))
+            st.markdown(f"<div class='bar'><div class='bar-inner' style='width:{pct}%;background:#FCAA4A;'></div></div>", unsafe_allow_html=True)
+    with c4:
+        st.markdown("<div class='datacard'><span class='small-label'>News Sentiment</span><br>"
+                    f"<span class='big-num'>{news_val if news_val is not None else '--'}</span> "
+                    f"{colored_badge(news_val, 'news')}"
+                    "<div class='caption'>Headline Tone</div></div>", unsafe_allow_html=True)
+        if news_val is not None:
+            pct = int(min(max(news_val, 0), 100))
+            st.markdown(f"<div class='bar'><div class='bar-inner' style='width:{pct}%;background:#FFD700;'></div></div>", unsafe_allow_html=True)
+        else:
+            st.caption(news_lbl)
 
 # --- Buffett-Style Signal Logic ---
 def buffett_style_signal(vix, rsi, trends, news):
@@ -245,29 +225,27 @@ def tomlee_signal(vix, rsi, trends, news):
     return "⚪ Tom Lee: Stay Invested or Accumulate Slowly"
 
 # --- Buffett Card ---
-st.markdown('<div class="signal-card buffett-card">', unsafe_allow_html=True)
-st.markdown('<div class="signal-label">🧭 Buffett-Style Long-Term Investor Signal</div>', unsafe_allow_html=True)
-st.markdown(f'<div class="big-metric">{buffett_style_signal(vix_val, rsi_val, trends_val, news_val)}</div>', unsafe_allow_html=True)
-st.markdown('<div style="font-size:0.98rem;color:#5A6174;padding-top:0.58em;">'
-            'Buffett Philosophy: <i>Be fearful when others are greedy, and greedy when others are fearful.</i></div>', unsafe_allow_html=True)
+st.markdown('<div class="datacard buffett-card" style="margin-top:0.6em;">', unsafe_allow_html=True)
+st.markdown('<div class="signal-head">🧭 Buffett-Style Long-Term Investor Signal</div>', unsafe_allow_html=True)
+st.markdown(f"<div class='big-num'>{buffett_style_signal(vix_val, rsi_val, trends_val, news_val)}</div>", unsafe_allow_html=True)
+st.markdown("<div class='caption'>Buffett: <i>Be fearful when others are greedy, and greedy when others are fearful.</i></div>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Tom Lee Card ---
-st.markdown('<div class="signal-card tomlee-card">', unsafe_allow_html=True)
-st.markdown('<div class="signal-label">📈 Tom Lee (Fundstrat) Tactical Signal</div>', unsafe_allow_html=True)
-st.markdown(f'<div class="big-metric">{tomlee_signal(vix_val, rsi_val, trends_val, news_val)}</div>', unsafe_allow_html=True)
-st.markdown('<div style="font-size:0.98rem;color:#5A6174;padding-top:0.58em;">'
-            "Tom Lee Style: <i>When everyone is cautious, that's when opportunity strikes. The market often climbs a wall of worry.</i></div>", unsafe_allow_html=True)
+st.markdown('<div class="datacard tomlee-card">', unsafe_allow_html=True)
+st.markdown('<div class="signal-head">📈 Tom Lee (Fundstrat) Tactical Signal</div>', unsafe_allow_html=True)
+st.markdown(f"<div class='big-num'>{tomlee_signal(vix_val, rsi_val, trends_val, news_val)}</div>", unsafe_allow_html=True)
+st.markdown("<div class='caption'>Tom Lee: <i>When everyone is cautious, that's when opportunity strikes.</i></div>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Meme Stock Radar Card ---
-st.markdown('<div class="signal-card" style="border-left: 7px solid #FCAA4A;">', unsafe_allow_html=True)
-st.markdown('<div class="signal-label">🚀 Meme Stock Radar (WSB Hotlist)</div>', unsafe_allow_html=True)
+st.markdown('<div class="datacard meme-card">', unsafe_allow_html=True)
+st.markdown('<div class="signal-head">🚀 Meme Stock Radar <span class="badge badge-blue">(WSB Hotlist)</span></div>', unsafe_allow_html=True)
 memes = fetch_pushshift_wsb_tickers(limit=700)
 if memes:
     for i, (ticker, n) in enumerate(memes):
         pct = get_price_change(ticker)
-        change = f"<span style='color:{'#2ECC40' if pct and pct>0 else '#E74C3C'};'>{pct:+.2f}%</span>" if pct is not None else ""
+        change = f"<span style='color:{'#19bb77' if pct and pct>0 else '#e44b5a'}; font-weight:700;'>{pct:+.2f}%</span>" if pct is not None else ""
         fire = "🔥" if i==0 and pct and pct > 10 else ""
         st.markdown(f"<b>{ticker}</b>: {n} mentions {change} {fire}", unsafe_allow_html=True)
     st.caption("Top tickers in r/wallstreetbets in the last day. ⚠️ Not investment advice.", unsafe_allow_html=True)
