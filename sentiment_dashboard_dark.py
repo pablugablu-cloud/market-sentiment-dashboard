@@ -1,40 +1,29 @@
 import os
+import re
+import requests
 import streamlit as st
 import yfinance as yf
 from ta.momentum import RSIIndicator
 from pytrends.request import TrendReq
 from newsapi import NewsApiClient
 from dotenv import load_dotenv
-import requests
-import re
-from collections import Counter
 
+# ----------- LOAD ENV VARIABLES -----------
 load_dotenv()
 
+# ----------- STREAMLIT SETUP -----------
 st.set_page_config(
     page_title="Market Sentiment Dashboard (Buffett & Tom Lee)",
     layout="wide",
+    initial_sidebar_state="auto"
 )
+
 st.title("📊 Market Sentiment Dashboard")
-st.caption("See how Buffett and Tom Lee might interpret current risk signals. Powered by VIX, RSI, Google Trends, News Sentiment, and Reddit Meme Stock Radar.")
+st.caption("Buffett & Tom Lee signals + Market Volatility, Google Trends, News, and WSB Meme Radar")
 st.markdown("---")
 
-### US TICKER SETUP (for high-confidence meme radar filtering)
-@st.cache_data(show_spinner=False)
-def load_us_tickers():
-    # Use yfinance's built-in tickers; you can also update this to your own CSV if you want
-    tickers = set()
-    try:
-        from yfinance import tickers_sp500, tickers_nasdaq, tickers_dow
-        for fetch in [tickers_sp500, tickers_nasdaq, tickers_dow]:
-            tickers.update([x.upper() for x in fetch()])
-    except Exception:
-        # fallback if yfinance changes
-        tickers.update(["AAPL","TSLA","MSFT","NVDA","GME","AMC","PLTR","SPY","QQQ","AMD","META","AMZN","GOOG","NFLX","ROKU"])
-    return tickers
-US_TICKERS = load_us_tickers()
+# ----------- DATA FUNCTIONS -----------
 
-# --- Data Functions ---
 def fetch_vix():
     try:
         df = yf.Ticker("^VIX").history(period="5d")
@@ -73,8 +62,8 @@ def fetch_news_sentiment():
     try:
         na = NewsApiClient(api_key=key)
         arts = na.get_everything(q="stock market", language="en", page_size=25)["articles"]
-        bears = ["crash", "panic", "recession", "sell-off"]
-        bulls = ["rally", "bullish", "surge", "record high"]
+        bears = ["crash", "panic", "recession", "sell-off", "fear", "collapse"]
+        bulls = ["rally", "bullish", "surge", "record high", "optimism"]
         b_score = sum(any(w in a["title"].lower() for w in bears) for a in arts)
         u_score = sum(any(w in a["title"].lower() for w in bulls) for a in arts)
         score = max(0, min(100, 50 + (u_score - b_score) * 2))
@@ -84,61 +73,87 @@ def fetch_news_sentiment():
         st.warning(f"NewsAPI error: {e}")
         return None, "Error"
 
-def fetch_wsb_meme_tickers(limit=20):
-    url = f"https://www.reddit.com/r/wallstreetbets/hot/.json?limit={limit}"
+def fetch_wsb_meme_tickers():
+    """
+    Scrapes /r/wallstreetbets 'hot' posts and returns most mentioned tickers in the last 25 posts.
+    Returns a list of (ticker, post title, upvotes).
+    """
+    url = "https://www.reddit.com/r/wallstreetbets/hot/.json?limit=25"
     headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/115.0.0.0 Safari/537.36"
-        ),
-        "Accept": "application/json"
+        "User-Agent": "Mozilla/5.0 (MarketSentimentDashboard/1.0; +https://github.com/your-repo)"
     }
+
+    # Get US stock tickers set for robust matching
+    @st.cache_resource
+    def load_all_tickers():
+        try:
+            tickers = yf.tickers_sp500()
+            all_tickers = set(tickers)
+            # Add some common meme tickers missed from S&P500
+            all_tickers.update(["GME", "AMC", "PLTR", "TSLA", "BBBY", "NVDA", "HOOD", "BB", "ROKU", "CLOV", "AAPL", "SPY"])
+            return all_tickers
+        except Exception:
+            # Fallback: Just use popular meme tickers if Yahoo fails
+            return set(["GME", "AMC", "PLTR", "TSLA", "BBBY", "NVDA", "HOOD", "BB", "ROKU", "CLOV", "AAPL", "SPY"])
+
     try:
         resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 429:
+            return "rate_limit"
         if resp.status_code != 200:
-            st.warning(f"Reddit returned status code {resp.status_code}. Try again later.")
-            return []
-        # Reddit will return HTML if rate limited
-        if not resp.headers.get("Content-Type", "").startswith("application/json"):
-            st.warning("Reddit returned non-JSON (rate limited or blocked). Try again in a few minutes.")
-            return []
-        posts = resp.json().get("data", {}).get("children", [])
-    except Exception as e:
-        st.warning(f"Reddit fetch error: {e}")
-        return []
+            return f"error:{resp.status_code}"
+        data = resp.json()
+        posts = data["data"]["children"]
+        all_titles = [p["data"]["title"] for p in posts if "title" in p["data"]]
+        all_selftexts = [p["data"]["selftext"] for p in posts if "selftext" in p["data"]]
+        combined = all_titles + all_selftexts
+        text = " ".join(combined)
 
-    # Heuristic: Only show likely real tickers
-    EXCLUDE = {
-        "YOLO", "WSB", "DD", "ETF", "USD", "ALL", "GAIN", "LOSS", "PUT", "CALL", "NEWS", "THE", "DAILY", "THREAD",
-        "Q", "EPS", "GAAP", "PORT", "AI", "USA", "STOCK", "PORTFOLIO", "STOCKS"
-    }
-    ticker_pat = re.compile(r'\$?([A-Za-z]{2,5})\b')
-    mentions = []
-    for post in posts:
-        data = post.get("data", {})
-        text = f"{data.get('title','')} {data.get('selftext','')}"
+        tickers = load_all_tickers()
+        ticker_pat = re.compile(r"\b([A-Z]{2,5})\b")
         found = ticker_pat.findall(text)
-        for match in found:
-            tkr = match.upper()
-            if tkr in US_TICKERS and tkr not in EXCLUDE:
-                mentions.append(tkr)
-    counts = Counter(mentions)
-    return counts.most_common(7) if counts else []
+        freq = {}
+        for t in found:
+            if t in tickers:
+                freq[t] = freq.get(t, 0) + 1
+        if not freq:
+            return []
+        sorted_tickers = sorted(freq.items(), key=lambda x: -x[1])[:10]
 
-# --- Fetch data ---
+        # Find post titles mentioning those tickers (for display)
+        ticker_to_title = {}
+        for p in posts:
+            title = p["data"]["title"]
+            upvotes = p["data"]["ups"]
+            for t, _ in sorted_tickers:
+                if t in title:
+                    ticker_to_title[t] = (title, upvotes)
+        result = []
+        for t, count in sorted_tickers:
+            title, upvotes = ticker_to_title.get(t, ("N/A", 0))
+            result.append((t, count, title, upvotes))
+        return result
+    except requests.exceptions.RequestException as e:
+        st.warning(f"Reddit fetch error: {e}")
+        return "network_error"
+    except Exception as e:
+        st.warning(f"Reddit parsing error: {e}")
+        return "parse_error"
+
+# ----------- FETCH DATA -----------
 vix_val = fetch_vix()
 rsi_val = fetch_rsi()
 trends_val = fetch_google_trends()
 news_val, news_lbl = fetch_news_sentiment()
-meme_tickers = fetch_wsb_meme_tickers()
+wsb_meme = fetch_wsb_meme_tickers()
 
-# --- Display metrics + meters ---
+# ----------- DISPLAY METRICS -----------
+
 cols = st.columns(4)
 metrics = [
     ("VIX (Volatility)", vix_val, None, ">30 = Elevated Fear"),
     ("RSI (S&P 500)", rsi_val, None, ">70 Overbought / <35 Oversold"),
-    ("Google Trends", trends_val, None, "Interest for 'stock market crash'"),
+    ("Google Trends", trends_val, None, "Interest for 'stock market crash' (last 7d)"),
     ("News Sentiment", news_val, news_lbl, "Headline tone: bull vs bear"),
 ]
 for col, (name, val, lbl, desc) in zip(cols, metrics):
@@ -151,71 +166,78 @@ for col, (name, val, lbl, desc) in zip(cols, metrics):
         with st.expander(f"ℹ️ What is {name}?"):
             st.write(desc)
 
-# --- Buffett-Style Signal Logic ---
+# ----------- BUFFETT SIGNAL -----------
 def buffett_style_signal(vix, rsi, trends, news):
     fear_count = 0
     if vix is not None and vix > 28: fear_count += 1
     if trends is not None and trends > 80: fear_count += 1
     if news is not None and news < 35: fear_count += 1
-
     if rsi is not None and rsi < 35 and fear_count >= 2:
         return "🟢 Buffett: Really Good Time to Buy (Be Greedy When Others Are Fearful)"
-
     if rsi is not None and rsi < 40 and fear_count >= 1:
         return "🟡 Buffett: Good Time to Accumulate, Be Patient"
-
     if (
         rsi is not None and 40 <= rsi <= 60
         and vix is not None and 16 < vix < 28
         and news is not None and 35 <= news <= 65
     ):
         return "⚪ Buffett: Wait, Stay Patient (No Edge)"
-
     if (
         rsi is not None and rsi > 70
         and news is not None and news > 60
         and trends is not None and trends < 20
     ):
         return "🔴 Buffett: Market Overheated, Wait for Pullback"
-
     return "🔴 Buffett: Hold Off (No Opportunity Detected)"
 
-# --- Tom Lee (Fundstrat) Signal Logic ---
+# ----------- TOM LEE SIGNAL -----------
 def tomlee_signal(vix, rsi, trends, news):
     bullish_score = 0
     if vix is not None and vix > 22: bullish_score += 1
     if rsi is not None and rsi < 45: bullish_score += 1
     if trends is not None and trends > 60: bullish_score += 1
     if news is not None and news < 50: bullish_score += 1
-
     if bullish_score >= 2:
         return "🟢 Tom Lee: Good Time to Buy (Buy the Dip Mentality)"
     if vix is not None and vix < 14 and rsi is not None and rsi > 70 and news is not None and news > 60:
         return "🔴 Tom Lee: Even Tom Lee says: Hold Off, Too Hot!"
     return "⚪ Tom Lee: Stay Invested or Accumulate Slowly"
 
-# --- Buffett Tracker ---
+# ----------- BUFFETT & TOM LEE UI -----------
 st.markdown("## 🧭 Buffett-Style Long-Term Investor Signal")
 st.success(buffett_style_signal(vix_val, rsi_val, trends_val, news_val))
 with st.expander("Buffett Philosophy"):
     st.markdown("> *Be fearful when others are greedy, and greedy when others are fearful.*  \n— Warren Buffett")
 
-# --- Tom Lee Tracker ---
 st.markdown("## 📈 Tom Lee (Fundstrat) Tactical Signal")
 st.info(tomlee_signal(vix_val, rsi_val, trends_val, news_val))
 with st.expander("Tom Lee Style"):
     st.markdown("> *When everyone is cautious, that’s when opportunity strikes. The market often climbs a wall of worry.*  \n— Tom Lee (Fundstrat, paraphrased)")
 
-# --- Meme Stock Radar ---
+# ----------- WSB MEME RADAR UI -----------
 st.markdown("## 🚀 Meme Stock Radar (WSB Hotlist)")
-if meme_tickers:
-    st.write("Top trending tickers on r/wallstreetbets right now:")
-    for i, (tkr, count) in enumerate(meme_tickers, 1):
-        st.write(f"**{i}. [{tkr}](https://finance.yahoo.com/quote/{tkr})** &mdash; {count} mentions")
-else:
+if wsb_meme == "rate_limit":
+    st.warning("Reddit API Rate Limited (Try again in 1-2 minutes).")
+elif isinstance(wsb_meme, str) and wsb_meme.startswith("error"):
+    code = wsb_meme.split(":")[1]
+    st.warning(f"Reddit returned status code {code}. Try again later.")
+elif wsb_meme == "network_error":
+    st.warning("Could not fetch Reddit posts (Network Error).")
+elif wsb_meme == "parse_error":
+    st.warning("Could not parse Reddit response. Format may have changed.")
+elif not wsb_meme or (isinstance(wsb_meme, list) and len(wsb_meme) == 0):
     st.info("No trending meme tickers found (try again soon).")
-with st.expander("How are meme stocks detected?"):
-    st.write("We scan recent hot posts on r/wallstreetbets for US stock tickers. Only actual tickers are counted, using a filter against S&P500/NASDAQ/DOW listings.")
+else:
+    st.write("Top tickers from recent /r/wallstreetbets hot posts (auto-detected):")
+    for t, count, title, upvotes in wsb_meme:
+        st.write(f"**{t}** — Mentioned {count} times | 🔺Upvotes: {upvotes}\n> _{title}_")
+
+with st.expander("ℹ️ How Meme Stock Radar works"):
+    st.write(
+        "Scrapes hot posts from r/wallstreetbets and auto-detects all valid US tickers mentioned. Only tickers that match official exchanges or common meme tickers are counted for high confidence."
+    )
+
+# ----------- DISCLAIMER -----------
 
 st.markdown("---")
 st.markdown("### ⚠️ Disclaimer")
