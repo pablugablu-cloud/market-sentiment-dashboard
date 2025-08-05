@@ -1,48 +1,69 @@
 import os
+import requests
 import streamlit as st
 import yfinance as yf
 from ta.momentum import RSIIndicator
 from pytrends.request import TrendReq
 from newsapi import NewsApiClient
-import requests
-import re
+from dotenv import load_dotenv
 from collections import Counter
+import re
 
-# ---- ENV SECRETS HANDLING ----
-NEWSAPI_KEY = st.secrets.get("NEWSAPI_KEY", os.getenv("NEWSAPI_KEY", ""))
+load_dotenv()
+
+# --------------- US Ticker Loading ---------------
+
+@st.cache_data(show_spinner=False, persist="disk")
+def load_all_us_tickers():
+    # Download once from NASDAQ FTP, or load static lists. Fast enough for Streamlit
+    urls = [
+        "https://data.nasdaq.com/api/v3/datasets/WIKI/prices.csv?api_key=demo",  # placeholder, not exhaustive
+        "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt",
+        "https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt",
+        # fallback, see also https://old.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nasdaq
+    ]
+    tickers = set()
+    # Parse NASDAQ and NYSE tickers
+    for url in urls[1:]:
+        try:
+            resp = requests.get(url, timeout=10)
+            lines = resp.text.splitlines()
+            for line in lines[1:]:
+                symbol = line.split('|')[0]
+                if symbol.isalpha() and 1 < len(symbol) <= 5:
+                    tickers.add(symbol)
+        except Exception:
+            continue
+    # Add S&P 500 (hardcoded as backup)
+    sp500_tickers = [
+        "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "BRK.B", "AVGO", "LLY", "JPM", "V", "UNH", "XOM", "MA",
+        "PG", "JNJ", "GOOG", "HD", "MRK", "CVX", "COST", "ABBV", "MCD", "ADBE", "PEP", "CRM", "BAC", "WMT", "NFLX",
+        "KO", "LIN", "DIS", "AMD", "T", "VZ", "PYPL", "ORCL", "PFE", "SBUX", "NKE", "INTC", "BA", "CMCSA"
+    ]
+    tickers.update(sp500_tickers)
+    return tickers
+
+US_TICKERS = load_all_us_tickers()
+
+# --------------- Streamlit UI Setup ---------------
 
 st.set_page_config(
     page_title="Market Sentiment Dashboard (Buffett & Tom Lee)",
     layout="wide",
 )
-st.markdown("""
-    <style>
-    html, body, [class*="css"] { font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important; background: #f7f9fb;}
-    .datacard { background: #fff; border-radius: 1.1em; box-shadow: 0 3px 18px 0 rgba(40,55,70,0.06); padding: 1.25em 1.4em 1.1em 1.4em; margin-bottom: 0.7em;}
-    .buffett-card { border-left: 7px solid #19bb77;}
-    .tomlee-card { border-left: 7px solid #225DF1;}
-    .meme-card { border-left: 7px solid #FCAA4A;}
-    .big-num { font-size: 2.09rem; font-weight: 800; margin: 0 0 0.09em 0;}
-    .caption { color: #a5a7ab; font-size: 0.99em; margin-top: -0.2em;}
-    .signal-head { font-weight: 700; font-size: 1.16rem;}
-    .ticker-up { color:#19bb77; font-weight:700;}
-    .ticker-down { color:#e44b5a; font-weight:700;}
-    </style>
-""", unsafe_allow_html=True)
-
 st.title("📊 Market Sentiment Dashboard")
-st.caption("Buffett & Tom Lee styled risk signals powered by VIX, RSI, Google Trends, News, and Reddit.")
-
+st.caption("Buffett & Tom Lee sentiment signals + Real-Time Meme Stock Radar (WSB)")
 st.markdown("---")
 
-# --- DATA FUNCTIONS ---
+# --------------- Core Data Functions ---------------
 
 def fetch_vix():
     try:
         df = yf.Ticker("^VIX").history(period="5d")
         vix = round(df["Close"].iloc[-1], 2)
         return vix
-    except Exception:
+    except Exception as e:
+        st.error(f"VIX data unavailable: {e}")
         return None
 
 def fetch_rsi():
@@ -51,7 +72,8 @@ def fetch_rsi():
         df["rsi"] = RSIIndicator(df["Close"]).rsi()
         rsi = round(df["rsi"].iloc[-1], 2)
         return rsi
-    except Exception:
+    except Exception as e:
+        st.error(f"RSI data unavailable: {e}")
         return None
 
 def fetch_google_trends(term="stock market crash"):
@@ -66,11 +88,12 @@ def fetch_google_trends(term="stock market crash"):
         return None
 
 def fetch_news_sentiment():
-    if not NEWSAPI_KEY:
-        st.warning("No NewsAPI key found. Set NEWSAPI_KEY in Streamlit secrets or .env.")
+    key = os.getenv("NEWSAPI_KEY", "")
+    if not key:
+        st.warning("No NewsAPI key found. Set NEWSAPI_KEY environment variable.")
         return None, "No API Key"
     try:
-        na = NewsApiClient(api_key=NEWSAPI_KEY)
+        na = NewsApiClient(api_key=key)
         arts = na.get_everything(q="stock market", language="en", page_size=25)["articles"]
         bears = ["crash", "panic", "recession", "sell-off"]
         bulls = ["rally", "bullish", "surge", "record high"]
@@ -83,80 +106,98 @@ def fetch_news_sentiment():
         st.warning(f"NewsAPI error: {e}")
         return None, "Error"
 
-def fetch_wsb_meme_tickers(limit=50):
+# ----------- Production-Grade Meme Radar -----------
+
+def fetch_wsb_meme_tickers(limit=20):
     url = f"https://www.reddit.com/r/wallstreetbets/hot/.json?limit={limit}"
     headers = {"User-Agent": "Mozilla/5.0 (compatible; MemeRadarBot/1.0)"}
     try:
         resp = requests.get(url, headers=headers, timeout=10)
-        if resp.status_code != 200:
-            return []
-        posts = resp.json()["data"]["children"]
-        EXCLUDE = {
-            "YOLO", "WSB", "DD", "ETF", "USD", "THE", "ITM", "OTM", "ALL", "OPEN", "GAIN",
-            "CALL", "PUT", "BIG", "LOSS", "CASH", "MOON", "ATM", "OUT", "EARN", "NEWS",
-            "SPY", "QQQ"  # Optionally exclude indexes; remove if you want them!
-        }
-        ticker_pat = re.compile(r'\b([A-Z]{2,5})\b')
-        mentions = []
-        for post in posts:
-            data = post.get("data", {})
-            for txt in [data.get("title", ""), data.get("selftext", "")]:
-                for match in ticker_pat.findall(txt):
-                    if match.isupper() and match not in EXCLUDE:
-                        mentions.append(match)
-        counts = Counter(mentions)
-        return counts.most_common(5)
+        posts = resp.json().get("data", {}).get("children", [])
     except Exception as e:
-        # For debugging: st.write(f"Reddit fetch error: {e}")
+        st.warning(f"Reddit fetch error: {e}")
         return []
+    EXCLUDE = {
+        "YOLO", "WSB", "DD", "ETF", "USD", "ALL", "GAIN", "LOSS", "PUT", "CALL", "NEWS", "THE", "DAILY", "THREAD",
+        "Q", "EPS", "GAAP", "PORT", "AI", "SPY", "PORTFOLIO", "STOCK", "USA", "AMAZON", "GAIN", "LOSS"
+    }
+    ticker_pat = re.compile(r'\$?([A-Za-z]{2,5})\b')
+    mentions = []
+    for post in posts:
+        data = post.get("data", {})
+        text = f"{data.get('title','')} {data.get('selftext','')}"
+        found = ticker_pat.findall(text)
+        for match in found:
+            tkr = match.upper()
+            if tkr in US_TICKERS and tkr not in EXCLUDE:
+                mentions.append(tkr)
+    counts = Counter(mentions)
+    return counts.most_common(7) if counts else []
 
-def get_price_change(ticker):
-    try:
-        data = yf.Ticker(ticker).history(period="5d")
-        if len(data) > 1:
-            prev = data['Close'].iloc[-2]
-            last = data['Close'].iloc[-1]
-            return round((last - prev) / prev * 100, 2)
-    except Exception:
-        pass
-    return None
+# ----------- Data Fetch Section -----------
+with st.spinner("Loading market sentiment..."):
+    vix_val = fetch_vix()
+    rsi_val = fetch_rsi()
+    trends_val = fetch_google_trends()
+    news_val, news_lbl = fetch_news_sentiment()
+    meme_tickers = fetch_wsb_meme_tickers()
 
-# --- FETCH DATA ---
-vix_val = fetch_vix()
-rsi_val = fetch_rsi()
-trends_val = fetch_google_trends()
-news_val, news_lbl = fetch_news_sentiment()
-memes = fetch_wsb_meme_tickers(limit=50)
+# ----------- UI Layout -----------
 
-# --- DISPLAY METRICS ---
 cols = st.columns(4)
 metrics = [
-    ("VIX (Volatility)", vix_val, ">30 = Elevated Fear"),
-    ("RSI (S&P 500)", rsi_val, ">70 Overbought / <35 Oversold"),
-    ("Google Trends", trends_val, "Search Interest: 'stock market crash'"),
-    ("News Sentiment", news_val, f"Headline Tone: {news_lbl}"),
+    ("VIX (Volatility)", vix_val, None, ">30 = Elevated Fear"),
+    ("RSI (S&P 500)", rsi_val, None, ">70 Overbought / <35 Oversold"),
+    ("Google Trends", trends_val, None, "Interest for 'stock market crash'"),
+    ("News Sentiment", news_val, news_lbl, "Headline tone: bull vs bear"),
 ]
-for col, (name, val, desc) in zip(cols, metrics):
+for col, (name, val, lbl, desc) in zip(cols, metrics):
     with col:
         display_val = val if val is not None else "N/A"
-        st.markdown(f"<div class='datacard'><span style='font-size:1.09rem;color:#8592A6;'>{name}</span><br>"
-                    f"<span class='big-num'>{display_val}</span>"
-                    f"<div class='caption'>{desc}</div></div>", unsafe_allow_html=True)
+        display_delta = lbl or ""
+        st.metric(f"**{name}**", value=display_val, delta=display_delta)
+        if isinstance(val, (int, float)):
+            st.progress(min(max(val / 100, 0.0), 1.0))
+        with st.expander(f"ℹ️ What is {name}?"):
+            st.write(desc)
 
-# --- BUFFETT/TOM LEE SIGNALS ---
+# ----------- Meme Stock Radar UI -----------
+st.markdown("## 🚀 Meme Stock Radar (WSB Hotlist)")
+if meme_tickers:
+    for tkr, cnt in meme_tickers:
+        st.markdown(f"- **{tkr}**  — mentioned `{cnt}` times in WSB hot posts")
+else:
+    st.info("No trending meme tickers found (try again soon).")
+with st.expander("How is this calculated?"):
+    st.write("We scan WSB hot post titles & bodies for US stock tickers (validated against NASDAQ/NYSE lists). Shows what's getting the most WSB attention today!")
+
+# ----------- Buffett & Tom Lee Signals -----------
 def buffett_style_signal(vix, rsi, trends, news):
     fear_count = 0
     if vix is not None and vix > 28: fear_count += 1
     if trends is not None and trends > 80: fear_count += 1
     if news is not None and news < 35: fear_count += 1
+
     if rsi is not None and rsi < 35 and fear_count >= 2:
         return "🟢 Buffett: Really Good Time to Buy (Be Greedy When Others Are Fearful)"
+
     if rsi is not None and rsi < 40 and fear_count >= 1:
         return "🟡 Buffett: Good Time to Accumulate, Be Patient"
-    if (rsi is not None and 40 <= rsi <= 60 and vix is not None and 16 < vix < 28 and news is not None and 35 <= news <= 65):
+
+    if (
+        rsi is not None and 40 <= rsi <= 60
+        and vix is not None and 16 < vix < 28
+        and news is not None and 35 <= news <= 65
+    ):
         return "⚪ Buffett: Wait, Stay Patient (No Edge)"
-    if (rsi is not None and rsi > 70 and news is not None and news > 60 and trends is not None and trends < 20):
+
+    if (
+        rsi is not None and rsi > 70
+        and news is not None and news > 60
+        and trends is not None and trends < 20
+    ):
         return "🔴 Buffett: Market Overheated, Wait for Pullback"
+
     return "🔴 Buffett: Hold Off (No Opportunity Detected)"
 
 def tomlee_signal(vix, rsi, trends, news):
@@ -165,51 +206,31 @@ def tomlee_signal(vix, rsi, trends, news):
     if rsi is not None and rsi < 45: bullish_score += 1
     if trends is not None and trends > 60: bullish_score += 1
     if news is not None and news < 50: bullish_score += 1
+
     if bullish_score >= 2:
         return "🟢 Tom Lee: Good Time to Buy (Buy the Dip Mentality)"
     if vix is not None and vix < 14 and rsi is not None and rsi > 70 and news is not None and news > 60:
         return "🔴 Tom Lee: Even Tom Lee says: Hold Off, Too Hot!"
     return "⚪ Tom Lee: Stay Invested or Accumulate Slowly"
 
-# --- SIGNAL CARDS ---
-st.markdown('<div class="datacard buffett-card" style="margin-top:0.4em;">', unsafe_allow_html=True)
-st.markdown('<div class="signal-head">🧭 Buffett-Style Long-Term Investor Signal</div>', unsafe_allow_html=True)
-st.markdown(f"<div class='big-num'>{buffett_style_signal(vix_val, rsi_val, trends_val, news_val)}</div>", unsafe_allow_html=True)
-st.markdown("<div class='caption'>Buffett: <i>Be fearful when others are greedy, and greedy when others are fearful.</i></div>", unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+# --- Buffett Tracker ---
+st.markdown("## 🧭 Buffett-Style Long-Term Investor Signal")
+st.success(buffett_style_signal(vix_val, rsi_val, trends_val, news_val))
+with st.expander("Buffett Philosophy"):
+    st.markdown("> *Be fearful when others are greedy, and greedy when others are fearful.*  \n— Warren Buffett")
 
-st.markdown('<div class="datacard tomlee-card">', unsafe_allow_html=True)
-st.markdown('<div class="signal-head">📈 Tom Lee (Fundstrat) Tactical Signal</div>', unsafe_allow_html=True)
-st.markdown(f"<div class='big-num'>{tomlee_signal(vix_val, rsi_val, trends_val, news_val)}</div>", unsafe_allow_html=True)
-st.markdown("<div class='caption'>Tom Lee: <i>When everyone is cautious, that’s when opportunity strikes.</i></div>", unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+# --- Tom Lee Tracker ---
+st.markdown("## 📈 Tom Lee (Fundstrat) Tactical Signal")
+st.info(tomlee_signal(vix_val, rsi_val, trends_val, news_val))
+with st.expander("Tom Lee Style"):
+    st.markdown("> *When everyone is cautious, that’s when opportunity strikes. The market often climbs a wall of worry.*  \n— Tom Lee (Fundstrat, paraphrased)")
 
-# --- MEME STOCK RADAR ---
-st.markdown('<div class="datacard meme-card">', unsafe_allow_html=True)
-st.markdown('<div class="signal-head">🚀 Meme Stock Radar <span style="font-size:0.97em;color:#225DF1;">(WSB Hotlist)</span></div>', unsafe_allow_html=True)
-if memes:
-    for ticker, n in memes:
-        pct = get_price_change(ticker)
-        if pct is not None:
-            color = "ticker-up" if pct > 0 else "ticker-down"
-            pct_str = f"<span class='{color}'>{pct:+.2f}%</span>"
-        else:
-            pct_str = ""
-        st.markdown(f"<b>{ticker}</b>: {n} mentions {pct_str}", unsafe_allow_html=True)
-    st.caption("Top tickers in r/wallstreetbets in the last day. ⚠️ Not investment advice.", unsafe_allow_html=True)
-else:
-    st.info("No trending meme tickers found (try again soon).")
-st.markdown('</div>', unsafe_allow_html=True)
-
-# --- DISCLAIMER & REFRESH ---
+# --- Footer ---
 st.markdown("---")
-with st.expander("⚠️ Disclaimer (Tap to expand)", expanded=False):
-    st.markdown("""
-    <b>For educational purposes only. Not financial advice. Use at your own risk.</b>
-    These signals use sentiment, volatility, and momentum for illustration only — not for trading or portfolio management.<br>
-    <b>Legal Notice:</b> This dashboard is for general informational purposes and does not create a client relationship. Always consult your licensed advisor before acting.
-    """, unsafe_allow_html=True)
-
+st.markdown("### ⚠️ Disclaimer")
+st.warning(
+    "For educational purposes only. Not financial advice. Use at your own risk. These signals use sentiment, volatility, and momentum for illustration only — not for trading or portfolio management."
+)
 if st.button("🔄 Refresh Data"):
     st.rerun()
 
