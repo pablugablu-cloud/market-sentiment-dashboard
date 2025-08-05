@@ -33,8 +33,10 @@ st.markdown("""
     .badge-yellow { background: #FFF4DC; color: #F6B100;}
     .badge-red { background: #ffefef; color: #e44b5a;}
     .badge-blue { background: #e5f1ff; color: #225DF1;}
+    .badge-gray { background: #f3f4f6; color: #a5a7ab;}
     .caption { color: #a5a7ab; font-size: 0.99em; margin-top: -0.2em; }
     .signal-head { font-weight: 700; font-size: 1.13rem; }
+    .msg { font-size:1em; color:#a5a7ab; margin: 0.1em 0 0.7em 0;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -47,7 +49,7 @@ st.markdown("""
     <div style="font-size:1.01rem;color:#6d7893;margin-top:0.18em;">
         Minimalist market snapshot inspired by Buffett & Tom Lee.<br>
         <span style="color:#A5AEBC;font-size:0.97rem;">
-            Powered by VIX, RSI, Google Trends, News. 
+            Powered by VIX, RSI, Google Trends, News.
         </span>
     </div>
 """, unsafe_allow_html=True)
@@ -58,7 +60,7 @@ def fetch_vix():
         df = yf.Ticker("^VIX").history(period="5d")
         vix = round(df["Close"].iloc[-1], 2)
         return vix
-    except Exception as e:
+    except Exception:
         return None
 
 def fetch_rsi():
@@ -67,7 +69,7 @@ def fetch_rsi():
         df["rsi"] = RSIIndicator(df["Close"]).rsi()
         rsi = round(df["rsi"].iloc[-1], 2)
         return rsi
-    except Exception as e:
+    except Exception:
         return None
 
 def fetch_google_trends(term="stock market crash"):
@@ -77,8 +79,8 @@ def fetch_google_trends(term="stock market crash"):
         df = py.interest_over_time()
         val = int(df[term].iloc[-1])
         return val
-    except Exception as e:
-        return None
+    except Exception:
+        return None  # No error text; just show N/A as neutral
 
 def fetch_news_sentiment():
     key = os.getenv("NEWSAPI_KEY", "")
@@ -95,11 +97,10 @@ def fetch_news_sentiment():
         lbl = "Bullish" if score > 60 else "Bearish" if score < 40 else "Mixed"
         return score, lbl
     except Exception as e:
-        # Show error but don't break layout
         msg = str(e)
         if "rateLimited" in msg or "Too Many Requests" in msg:
             return None, "Rate Limited"
-        return None, "Error"
+        return None, "Unavailable"
 
 def fetch_pushshift_wsb_tickers(limit=500):
     url = f"https://api.pushshift.io/reddit/search/submission/?subreddit=wallstreetbets&size={limit}&fields=title,selftext"
@@ -116,7 +117,7 @@ def fetch_pushshift_wsb_tickers(limit=500):
                     mentions.append(match)
         counts = Counter(mentions)
         return counts.most_common(5)
-    except Exception as e:
+    except Exception:
         return []
 
 def get_price_change(ticker):
@@ -138,7 +139,7 @@ news_val, news_lbl = fetch_news_sentiment()
 # --- Mini Helper for colored badges ---
 def colored_badge(value, label):
     if value is None:
-        return f"<span class='badge badge-red'>N/A</span>"
+        return f"<span class='badge badge-gray'>N/A</span>"
     if label.lower() == "vix":
         if value > 30: return f"<span class='badge badge-red'>High</span>"
         elif value > 20: return f"<span class='badge badge-yellow'>Elevated</span>"
@@ -148,10 +149,13 @@ def colored_badge(value, label):
         elif value < 35: return f"<span class='badge badge-blue'>Oversold</span>"
         else: return f"<span class='badge badge-green'>Normal</span>"
     if label.lower() == "google":
+        if value is None: return "<span class='badge badge-gray'>N/A</span>"
         if value > 70: return f"<span class='badge badge-red'>High Search</span>"
         elif value > 30: return f"<span class='badge badge-yellow'>Moderate</span>"
         else: return f"<span class='badge badge-green'>Low</span>"
     if label.lower() == "news":
+        if value is None or news_lbl in ["No API Key", "Rate Limited", "Unavailable"]:
+            return "<span class='badge badge-gray'>N/A</span>"
         if news_lbl == "Bullish": return f"<span class='badge badge-green'>Bullish</span>"
         if news_lbl == "Bearish": return f"<span class='badge badge-red'>Bearish</span>"
         return f"<span class='badge badge-yellow'>Mixed</span>"
@@ -184,6 +188,8 @@ with st.container():
         if trends_val is not None:
             pct = int(min(max(trends_val, 0), 100))
             st.markdown(f"<div class='bar'><div class='bar-inner' style='width:{pct}%;background:#FCAA4A;'></div></div>", unsafe_allow_html=True)
+        elif trends_val is None:
+            st.markdown(f"<span class='msg'>Google Trends data is not available (rate limited, or no connection).</span>", unsafe_allow_html=True)
     with c4:
         st.markdown("<div class='datacard'><span class='small-label'>News Sentiment</span><br>"
                     f"<span class='big-num'>{news_val if news_val is not None else '--'}</span> "
@@ -192,8 +198,8 @@ with st.container():
         if news_val is not None:
             pct = int(min(max(news_val, 0), 100))
             st.markdown(f"<div class='bar'><div class='bar-inner' style='width:{pct}%;background:#FFD700;'></div></div>", unsafe_allow_html=True)
-        else:
-            st.caption(news_lbl)
+        elif news_lbl:
+            st.markdown(f"<span class='msg'>News sentiment not available ({news_lbl}).</span>", unsafe_allow_html=True)
 
 # --- Buffett-Style Signal Logic ---
 def buffett_style_signal(vix, rsi, trends, news):
@@ -250,22 +256,6 @@ if memes:
         st.markdown(f"<b>{ticker}</b>: {n} mentions {change} {fire}", unsafe_allow_html=True)
     st.caption("Top tickers in r/wallstreetbets in the last day. ⚠️ Not investment advice.", unsafe_allow_html=True)
 else:
-    st.caption("No trending meme tickers found (try again soon).", unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-# --- Disclaimer Collapsible ---
-with st.expander("⚠️ Disclaimer (Tap to expand)", expanded=False):
-    st.markdown("""
-    <div class='disclaimer-pro'>
-    <b>For educational purposes only. Not financial advice. Use at your own risk.</b>
-    These signals use sentiment, volatility, and momentum for illustration only — not for trading or portfolio management.<br>
-    <b>Legal Notice:</b> This dashboard is for general informational purposes and does not create a client relationship. Always consult your licensed advisor before acting.
-    </div>
-    """, unsafe_allow_html=True)
-
-# --- Refresh Button ---
-st.markdown('<div class="refresh-button">', unsafe_allow_html=True)
-if st.button("🔄 Refresh Data"):
-    st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
+    st.caption("No trending meme tickers found. Either r/WSB is quiet, API is slow, or it's just a boring day. 😉", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html
 
