@@ -5,17 +5,24 @@ from ta.momentum import RSIIndicator
 from pytrends.request import TrendReq
 from newsapi import NewsApiClient
 from dotenv import load_dotenv
-import requests
-import re
+import praw
 from collections import Counter
+import re
 
+# Load .env if local, else use Streamlit secrets
 load_dotenv()
+
+# Get Reddit API creds from environment/secrets (DO NOT HARDCODE)
+REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID")
+REDDIT_CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET")
+REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT", "masenti.streamlit.app dashboard by Vast-Whereas-4143")
+
 st.set_page_config(
     page_title="Market Sentiment Dashboard (Minimalist)",
     layout="wide",
 )
 
-# --- Custom CSS ---
+# --- Minimalist Modern CSS ---
 st.markdown("""
     <style>
     html, body, [class*="css"]  { font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important; background: #f7f9fb; }
@@ -33,10 +40,8 @@ st.markdown("""
     .badge-yellow { background: #FFF4DC; color: #F6B100;}
     .badge-red { background: #ffefef; color: #e44b5a;}
     .badge-blue { background: #e5f1ff; color: #225DF1;}
-    .badge-gray { background: #f3f4f6; color: #a5a7ab;}
     .caption { color: #a5a7ab; font-size: 0.99em; margin-top: -0.2em; }
     .signal-head { font-weight: 700; font-size: 1.13rem; }
-    .msg { font-size:1em; color:#a5a7ab; margin: 0.1em 0 0.7em 0;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -60,7 +65,7 @@ def fetch_vix():
         df = yf.Ticker("^VIX").history(period="5d")
         vix = round(df["Close"].iloc[-1], 2)
         return vix
-    except Exception:
+    except Exception as e:
         return None
 
 def fetch_rsi():
@@ -69,7 +74,7 @@ def fetch_rsi():
         df["rsi"] = RSIIndicator(df["Close"]).rsi()
         rsi = round(df["rsi"].iloc[-1], 2)
         return rsi
-    except Exception:
+    except Exception as e:
         return None
 
 def fetch_google_trends(term="stock market crash"):
@@ -79,8 +84,8 @@ def fetch_google_trends(term="stock market crash"):
         df = py.interest_over_time()
         val = int(df[term].iloc[-1])
         return val
-    except Exception:
-        return None  # No error text; just show N/A as neutral
+    except Exception as e:
+        return None
 
 def fetch_news_sentiment():
     key = os.getenv("NEWSAPI_KEY", "")
@@ -100,24 +105,33 @@ def fetch_news_sentiment():
         msg = str(e)
         if "rateLimited" in msg or "Too Many Requests" in msg:
             return None, "Rate Limited"
-        return None, "Unavailable"
+        return None, "Error"
 
-def fetch_pushshift_wsb_tickers(limit=500):
-    url = f"https://api.pushshift.io/reddit/search/submission/?subreddit=wallstreetbets&size={limit}&fields=title,selftext"
+def fetch_wsb_tickers(limit=100):
+    # Reddit API credentials from environment/secrets
+    client_id = os.getenv("REDDIT_CLIENT_ID")
+    client_secret = os.getenv("REDDIT_CLIENT_SECRET")
+    user_agent = os.getenv("REDDIT_USER_AGENT", "masenti.streamlit.app dashboard by Vast-Whereas-4143")
+    if not client_id or not client_secret or not user_agent:
+        return []
     try:
-        r = requests.get(url, timeout=10)
-        data = r.json().get('data', [])
-        texts = [d.get('title', '') + " " + d.get('selftext', '') for d in data]
+        reddit = praw.Reddit(
+            client_id=client_id,
+            client_secret=client_secret,
+            user_agent=user_agent
+        )
+        posts = reddit.subreddit("wallstreetbets").new(limit=limit)
+        titles = [p.title + " " + (p.selftext or "") for p in posts]
         pat = re.compile(r'\$?([A-Z]{2,5})\b')
         exclude = {"USD", "WSB", "ETF", "IPO", "SPAC", "CEO", "DD", "FOMO", "ATH", "LOL", "TOS"}
         mentions = []
-        for text in texts:
+        for text in titles:
             for match in pat.findall(text):
                 if match not in exclude and match.isalpha():
                     mentions.append(match)
         counts = Counter(mentions)
         return counts.most_common(5)
-    except Exception:
+    except Exception as e:
         return []
 
 def get_price_change(ticker):
@@ -136,10 +150,10 @@ rsi_val = fetch_rsi()
 trends_val = fetch_google_trends()
 news_val, news_lbl = fetch_news_sentiment()
 
-# --- Mini Helper for colored badges ---
+# --- Helper: colored badges ---
 def colored_badge(value, label):
     if value is None:
-        return f"<span class='badge badge-gray'>N/A</span>"
+        return f"<span class='badge badge-red'>N/A</span>"
     if label.lower() == "vix":
         if value > 30: return f"<span class='badge badge-red'>High</span>"
         elif value > 20: return f"<span class='badge badge-yellow'>Elevated</span>"
@@ -149,13 +163,10 @@ def colored_badge(value, label):
         elif value < 35: return f"<span class='badge badge-blue'>Oversold</span>"
         else: return f"<span class='badge badge-green'>Normal</span>"
     if label.lower() == "google":
-        if value is None: return "<span class='badge badge-gray'>N/A</span>"
         if value > 70: return f"<span class='badge badge-red'>High Search</span>"
         elif value > 30: return f"<span class='badge badge-yellow'>Moderate</span>"
         else: return f"<span class='badge badge-green'>Low</span>"
     if label.lower() == "news":
-        if value is None or news_lbl in ["No API Key", "Rate Limited", "Unavailable"]:
-            return "<span class='badge badge-gray'>N/A</span>"
         if news_lbl == "Bullish": return f"<span class='badge badge-green'>Bullish</span>"
         if news_lbl == "Bearish": return f"<span class='badge badge-red'>Bearish</span>"
         return f"<span class='badge badge-yellow'>Mixed</span>"
@@ -188,8 +199,6 @@ with st.container():
         if trends_val is not None:
             pct = int(min(max(trends_val, 0), 100))
             st.markdown(f"<div class='bar'><div class='bar-inner' style='width:{pct}%;background:#FCAA4A;'></div></div>", unsafe_allow_html=True)
-        elif trends_val is None:
-            st.markdown(f"<span class='msg'>Google Trends data is not available (rate limited, or no connection).</span>", unsafe_allow_html=True)
     with c4:
         st.markdown("<div class='datacard'><span class='small-label'>News Sentiment</span><br>"
                     f"<span class='big-num'>{news_val if news_val is not None else '--'}</span> "
@@ -198,8 +207,8 @@ with st.container():
         if news_val is not None:
             pct = int(min(max(news_val, 0), 100))
             st.markdown(f"<div class='bar'><div class='bar-inner' style='width:{pct}%;background:#FFD700;'></div></div>", unsafe_allow_html=True)
-        elif news_lbl:
-            st.markdown(f"<span class='msg'>News sentiment not available ({news_lbl}).</span>", unsafe_allow_html=True)
+        else:
+            st.caption(news_lbl)
 
 # --- Buffett-Style Signal Logic ---
 def buffett_style_signal(vix, rsi, trends, news):
@@ -247,7 +256,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 # --- Meme Stock Radar Card ---
 st.markdown('<div class="datacard meme-card">', unsafe_allow_html=True)
 st.markdown('<div class="signal-head">🚀 Meme Stock Radar <span class="badge badge-blue">(WSB Hotlist)</span></div>', unsafe_allow_html=True)
-memes = fetch_pushshift_wsb_tickers(limit=700)
+memes = fetch_wsb_tickers(limit=150)
 if memes:
     for i, (ticker, n) in enumerate(memes):
         pct = get_price_change(ticker)
@@ -256,7 +265,7 @@ if memes:
         st.markdown(f"<b>{ticker}</b>: {n} mentions {change} {fire}", unsafe_allow_html=True)
     st.caption("Top tickers in r/wallstreetbets in the last day. ⚠️ Not investment advice.", unsafe_allow_html=True)
 else:
-    st.caption("No trending meme tickers found. Either r/WSB is quiet, API is slow, or it's just a boring day. 😉", unsafe_allow_html=True)
+    st.caption("No trending meme tickers found (try again soon).", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Disclaimer Collapsible ---
@@ -270,6 +279,8 @@ with st.expander("⚠️ Disclaimer (Tap to expand)", expanded=False):
     """, unsafe_allow_html=True)
 
 # --- Refresh Button ---
+st.markdown('<div class="refresh-button">', unsafe_allow_html=True)
 if st.button("🔄 Refresh Data"):
     st.rerun()
+st.markdown
 

@@ -5,4 +5,5 @@ pytrends
 newsapi-python
 python-dotenv
 plotly
-
+praw
+requests
