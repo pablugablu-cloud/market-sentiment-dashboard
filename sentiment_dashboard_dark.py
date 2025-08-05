@@ -1,62 +1,40 @@
 import os
-import requests
 import streamlit as st
 import yfinance as yf
 from ta.momentum import RSIIndicator
 from pytrends.request import TrendReq
 from newsapi import NewsApiClient
 from dotenv import load_dotenv
-from collections import Counter
+import requests
 import re
+from collections import Counter
 
 load_dotenv()
-
-# --------------- US Ticker Loading ---------------
-
-@st.cache_data(show_spinner=False, persist="disk")
-def load_all_us_tickers():
-    # Download once from NASDAQ FTP, or load static lists. Fast enough for Streamlit
-    urls = [
-        "https://data.nasdaq.com/api/v3/datasets/WIKI/prices.csv?api_key=demo",  # placeholder, not exhaustive
-        "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt",
-        "https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt",
-        # fallback, see also https://old.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nasdaq
-    ]
-    tickers = set()
-    # Parse NASDAQ and NYSE tickers
-    for url in urls[1:]:
-        try:
-            resp = requests.get(url, timeout=10)
-            lines = resp.text.splitlines()
-            for line in lines[1:]:
-                symbol = line.split('|')[0]
-                if symbol.isalpha() and 1 < len(symbol) <= 5:
-                    tickers.add(symbol)
-        except Exception:
-            continue
-    # Add S&P 500 (hardcoded as backup)
-    sp500_tickers = [
-        "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "BRK.B", "AVGO", "LLY", "JPM", "V", "UNH", "XOM", "MA",
-        "PG", "JNJ", "GOOG", "HD", "MRK", "CVX", "COST", "ABBV", "MCD", "ADBE", "PEP", "CRM", "BAC", "WMT", "NFLX",
-        "KO", "LIN", "DIS", "AMD", "T", "VZ", "PYPL", "ORCL", "PFE", "SBUX", "NKE", "INTC", "BA", "CMCSA"
-    ]
-    tickers.update(sp500_tickers)
-    return tickers
-
-US_TICKERS = load_all_us_tickers()
-
-# --------------- Streamlit UI Setup ---------------
 
 st.set_page_config(
     page_title="Market Sentiment Dashboard (Buffett & Tom Lee)",
     layout="wide",
 )
 st.title("📊 Market Sentiment Dashboard")
-st.caption("Buffett & Tom Lee sentiment signals + Real-Time Meme Stock Radar (WSB)")
+st.caption("See how Buffett and Tom Lee might interpret current risk signals. Powered by VIX, RSI, Google Trends, News Sentiment, and Reddit Meme Stock Radar.")
 st.markdown("---")
 
-# --------------- Core Data Functions ---------------
+### US TICKER SETUP (for high-confidence meme radar filtering)
+@st.cache_data(show_spinner=False)
+def load_us_tickers():
+    # Use yfinance's built-in tickers; you can also update this to your own CSV if you want
+    tickers = set()
+    try:
+        from yfinance import tickers_sp500, tickers_nasdaq, tickers_dow
+        for fetch in [tickers_sp500, tickers_nasdaq, tickers_dow]:
+            tickers.update([x.upper() for x in fetch()])
+    except Exception:
+        # fallback if yfinance changes
+        tickers.update(["AAPL","TSLA","MSFT","NVDA","GME","AMC","PLTR","SPY","QQQ","AMD","META","AMZN","GOOG","NFLX","ROKU"])
+    return tickers
+US_TICKERS = load_us_tickers()
 
+# --- Data Functions ---
 def fetch_vix():
     try:
         df = yf.Ticker("^VIX").history(period="5d")
@@ -106,20 +84,34 @@ def fetch_news_sentiment():
         st.warning(f"NewsAPI error: {e}")
         return None, "Error"
 
-# ----------- Production-Grade Meme Radar -----------
-
 def fetch_wsb_meme_tickers(limit=20):
     url = f"https://www.reddit.com/r/wallstreetbets/hot/.json?limit={limit}"
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; MemeRadarBot/1.0)"}
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/115.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json"
+    }
     try:
         resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code != 200:
+            st.warning(f"Reddit returned status code {resp.status_code}. Try again later.")
+            return []
+        # Reddit will return HTML if rate limited
+        if not resp.headers.get("Content-Type", "").startswith("application/json"):
+            st.warning("Reddit returned non-JSON (rate limited or blocked). Try again in a few minutes.")
+            return []
         posts = resp.json().get("data", {}).get("children", [])
     except Exception as e:
         st.warning(f"Reddit fetch error: {e}")
         return []
+
+    # Heuristic: Only show likely real tickers
     EXCLUDE = {
         "YOLO", "WSB", "DD", "ETF", "USD", "ALL", "GAIN", "LOSS", "PUT", "CALL", "NEWS", "THE", "DAILY", "THREAD",
-        "Q", "EPS", "GAAP", "PORT", "AI", "SPY", "PORTFOLIO", "STOCK", "USA", "AMAZON", "GAIN", "LOSS"
+        "Q", "EPS", "GAAP", "PORT", "AI", "USA", "STOCK", "PORTFOLIO", "STOCKS"
     }
     ticker_pat = re.compile(r'\$?([A-Za-z]{2,5})\b')
     mentions = []
@@ -134,16 +126,14 @@ def fetch_wsb_meme_tickers(limit=20):
     counts = Counter(mentions)
     return counts.most_common(7) if counts else []
 
-# ----------- Data Fetch Section -----------
-with st.spinner("Loading market sentiment..."):
-    vix_val = fetch_vix()
-    rsi_val = fetch_rsi()
-    trends_val = fetch_google_trends()
-    news_val, news_lbl = fetch_news_sentiment()
-    meme_tickers = fetch_wsb_meme_tickers()
+# --- Fetch data ---
+vix_val = fetch_vix()
+rsi_val = fetch_rsi()
+trends_val = fetch_google_trends()
+news_val, news_lbl = fetch_news_sentiment()
+meme_tickers = fetch_wsb_meme_tickers()
 
-# ----------- UI Layout -----------
-
+# --- Display metrics + meters ---
 cols = st.columns(4)
 metrics = [
     ("VIX (Volatility)", vix_val, None, ">30 = Elevated Fear"),
@@ -161,17 +151,7 @@ for col, (name, val, lbl, desc) in zip(cols, metrics):
         with st.expander(f"ℹ️ What is {name}?"):
             st.write(desc)
 
-# ----------- Meme Stock Radar UI -----------
-st.markdown("## 🚀 Meme Stock Radar (WSB Hotlist)")
-if meme_tickers:
-    for tkr, cnt in meme_tickers:
-        st.markdown(f"- **{tkr}**  — mentioned `{cnt}` times in WSB hot posts")
-else:
-    st.info("No trending meme tickers found (try again soon).")
-with st.expander("How is this calculated?"):
-    st.write("We scan WSB hot post titles & bodies for US stock tickers (validated against NASDAQ/NYSE lists). Shows what's getting the most WSB attention today!")
-
-# ----------- Buffett & Tom Lee Signals -----------
+# --- Buffett-Style Signal Logic ---
 def buffett_style_signal(vix, rsi, trends, news):
     fear_count = 0
     if vix is not None and vix > 28: fear_count += 1
@@ -200,6 +180,7 @@ def buffett_style_signal(vix, rsi, trends, news):
 
     return "🔴 Buffett: Hold Off (No Opportunity Detected)"
 
+# --- Tom Lee (Fundstrat) Signal Logic ---
 def tomlee_signal(vix, rsi, trends, news):
     bullish_score = 0
     if vix is not None and vix > 22: bullish_score += 1
@@ -225,12 +206,23 @@ st.info(tomlee_signal(vix_val, rsi_val, trends_val, news_val))
 with st.expander("Tom Lee Style"):
     st.markdown("> *When everyone is cautious, that’s when opportunity strikes. The market often climbs a wall of worry.*  \n— Tom Lee (Fundstrat, paraphrased)")
 
-# --- Footer ---
+# --- Meme Stock Radar ---
+st.markdown("## 🚀 Meme Stock Radar (WSB Hotlist)")
+if meme_tickers:
+    st.write("Top trending tickers on r/wallstreetbets right now:")
+    for i, (tkr, count) in enumerate(meme_tickers, 1):
+        st.write(f"**{i}. [{tkr}](https://finance.yahoo.com/quote/{tkr})** &mdash; {count} mentions")
+else:
+    st.info("No trending meme tickers found (try again soon).")
+with st.expander("How are meme stocks detected?"):
+    st.write("We scan recent hot posts on r/wallstreetbets for US stock tickers. Only actual tickers are counted, using a filter against S&P500/NASDAQ/DOW listings.")
+
 st.markdown("---")
 st.markdown("### ⚠️ Disclaimer")
 st.warning(
     "For educational purposes only. Not financial advice. Use at your own risk. These signals use sentiment, volatility, and momentum for illustration only — not for trading or portfolio management."
 )
+
 if st.button("🔄 Refresh Data"):
     st.rerun()
 
