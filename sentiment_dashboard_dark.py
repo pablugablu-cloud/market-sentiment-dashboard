@@ -6,6 +6,9 @@ from pytrends.request import TrendReq
 from newsapi import NewsApiClient
 from dotenv import load_dotenv
 import plotly.graph_objects as go
+import requests
+import re
+from collections import Counter
 
 load_dotenv()
 st.set_page_config(
@@ -98,6 +101,37 @@ def fetch_news_sentiment():
         st.warning(f"NewsAPI error: {e}")
         return None, "Error"
 
+# --- Meme Stock Radar ---
+def fetch_pushshift_wsb_tickers(limit=500):
+    url = f"https://api.pushshift.io/reddit/search/submission/?subreddit=wallstreetbets&size={limit}&fields=title,selftext"
+    try:
+        r = requests.get(url, timeout=10)
+        data = r.json().get('data', [])
+        texts = [d.get('title', '') + " " + d.get('selftext', '') for d in data]
+        # Extract $TICKER or all-caps tickers
+        pat = re.compile(r'\$?([A-Z]{2,5})\b')
+        exclude = {"USD", "WSB", "ETF", "IPO", "SPAC", "CEO", "DD", "FOMO", "ATH", "LOL", "TOS"}
+        mentions = []
+        for text in texts:
+            for match in pat.findall(text):
+                if match not in exclude and match.isalpha():
+                    mentions.append(match)
+        counts = Counter(mentions)
+        return counts.most_common(5)
+    except Exception as e:
+        st.warning(f"Could not load meme tickers: {e}")
+        return []
+
+def get_price_change(ticker):
+    try:
+        data = yf.Ticker(ticker).history(period="5d")
+        if len(data) > 1:
+            prev = data['Close'].iloc[-2]
+            last = data['Close'].iloc[-1]
+            return round((last - prev)/prev * 100, 2)
+    except: pass
+    return None
+
 # --- Fetch data ---
 vix_val = fetch_vix()
 rsi_val = fetch_rsi()
@@ -106,8 +140,6 @@ news_val, news_lbl = fetch_news_sentiment()
 
 # --- Minimalist Modern Plotly Dials ---
 def modern_gauge(title, value, minval, maxval, thresholds, colorbands, maincolor="#1967D2"):
-    # colorbands: list of (range, color)
-    # value: if None, show '--'
     if value is None:
         value = minval
         number = {'prefix': '-- '}
@@ -226,6 +258,21 @@ st.markdown('<div class="signal-label">📈 Tom Lee (Fundstrat) Tactical Signal<
 st.markdown(f'<div class="big-metric">{tomlee_signal(vix_val, rsi_val, trends_val, news_val)}</div>', unsafe_allow_html=True)
 st.markdown('<div style="font-size:0.98rem;color:#5A6174;padding-top:0.58em;">'
             "Tom Lee Style: <i>When everyone is cautious, that's when opportunity strikes. The market often climbs a wall of worry.</i></div>", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# --- Meme Stock Radar Card ---
+st.markdown('<div class="signal-card" style="border-left: 7px solid #FCAA4A;">', unsafe_allow_html=True)
+st.markdown('<div class="signal-label">🚀 Meme Stock Radar (WSB Hotlist)</div>', unsafe_allow_html=True)
+memes = fetch_pushshift_wsb_tickers(limit=700)
+if memes:
+    for i, (ticker, n) in enumerate(memes):
+        pct = get_price_change(ticker)
+        change = f"<span style='color:{'#2ECC40' if pct and pct>0 else '#E74C3C'};'>{pct:+.2f}%</span>" if pct is not None else ""
+        fire = "🔥" if i==0 and pct and pct > 10 else ""
+        st.markdown(f"<b>{ticker}</b>: {n} mentions {change} {fire}", unsafe_allow_html=True)
+    st.caption("Top tickers in r/wallstreetbets in the last day. ⚠️ Not investment advice.", unsafe_allow_html=True)
+else:
+    st.caption("No trending meme tickers found (try again soon).", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Disclaimer Collapsible ---
