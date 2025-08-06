@@ -173,5 +173,5 @@ st.markdown("---")
 st.warning("For educational purposes only. Not financial advice.")
 
 if st.button("🔄 Refresh Data"):
-    st.experimental_rerun()
+    st.rerun()
 
