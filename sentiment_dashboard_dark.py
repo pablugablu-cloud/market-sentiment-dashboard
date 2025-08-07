@@ -54,8 +54,18 @@ def fetch_news_sentiment():
     try:
         na = NewsApiClient(api_key=key)
         arts = na.get_everything(q="stock market", language="en", page_size=25)["articles"]
-        bears = ["crash","panic","recession","sell-off"]
-        bulls = ["rally","bullish","surge","record high"]
+        bears = [
+    "crash", "panic", "recession", "sell-off",
+    "plunge", "bearish", "collapse", "correction",
+    "turmoil", "downturn", "fear", "volatility"
+]
+
+        bulls = [
+    "rally", "bullish", "surge", "record high",
+    "rebound", "recovery", "breakout", "all-time high",
+    "optimism", "gains", "momentum", "boom"
+]
+
         b = sum(any(w in a["title"].lower() for w in bears) for a in arts)
         u = sum(any(w in a["title"].lower() for w in bulls) for a in arts)
         score = max(0, min(100, 50 + 2*(u-b)))
