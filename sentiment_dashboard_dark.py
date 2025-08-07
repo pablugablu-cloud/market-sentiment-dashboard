@@ -55,16 +55,34 @@ def fetch_news_sentiment():
         na = NewsApiClient(api_key=key)
         arts = na.get_everything(q="stock market", language="en", page_size=25)["articles"]
         bears = [
-    "crash", "panic", "recession", "sell-off",
-    "plunge", "bearish", "collapse", "correction",
-    "turmoil", "downturn", "fear", "volatility"
+    # Strong negative events
+    "crash", "collapse", "meltdown", "freefall", "plunge",
+
+    # Investor emotions / reactions
+    "panic", "fear", "uncertainty", "turmoil", "anxiety",
+
+    # Market phases / conditions
+    "recession", "downturn", "correction", "bearish", "sell-off", "slowdown",
+
+    # Volatility or risk signals
+    "volatility", "instability", "losses", "decline", "bloodbath"
 ]
 
-        bulls = [
-    "rally", "bullish", "surge", "record high",
-    "rebound", "recovery", "breakout", "all-time high",
-    "optimism", "gains", "momentum", "boom"
+
+       bulls = [
+    # Positive market moves
+    "rally", "surge", "spike", "run-up", "jump", "soar",
+
+    # Investor emotions / tone
+    "bullish", "optimism", "confidence", "momentum", "strength",
+
+    # Records and highs
+    "record high", "all-time high", "breakout", "new peak", "milestone",
+
+    # Recovery or reversal signals
+    "rebound", "recovery", "bounce back", "comeback", "upswing"
 ]
+
 
         b = sum(any(w in a["title"].lower() for w in bears) for a in arts)
         u = sum(any(w in a["title"].lower() for w in bulls) for a in arts)
