@@ -55,32 +55,37 @@ def fetch_news_sentiment():
         na = NewsApiClient(api_key=key)
         arts = na.get_everything(q="stock market", language="en", page_size=25)["articles"]
         bears = [
-    # Strong negative events
-    "crash", "collapse", "meltdown", "freefall", "plunge",
+    # Market crashes and collapses
+    "crash", "collapse", "meltdown", "plunge", "freefall", "bloodbath", "nosedive", "sell-off",
 
-    # Investor emotions / reactions
-    "panic", "fear", "uncertainty", "turmoil", "anxiety",
+    # Economic stress
+    "recession", "slowdown", "downturn", "stagflation", "deflation", "default", "credit crunch",
 
-    # Market phases / conditions
-    "recession", "downturn", "correction", "bearish", "sell-off", "slowdown",
+    # Investor emotions / fear signals
+    "panic", "fear", "uncertainty", "turmoil", "concern", "risk-off", "bearish", "pessimism", "jitters",
 
-    # Volatility or risk signals
-    "volatility", "instability", "losses", "decline", "bloodbath"
+    # Volatility and instability
+    "volatility", "instability", "turbulence", "shock", "chaos", "fragile",
+
+    # Market losses / negatives
+    "losses", "decline", "drop", "slump", "dip", "red", "cut", "plummeting", "downgrade", "underperform"
 ]
 
+        bulls = [
+    # Market gains and breakouts
+    "rally", "surge", "soar", "jump", "bounce", "run-up", "breakout", "rebound", "uptrend", "green",
 
-       bulls = [
-    # Positive market moves
-    "rally", "surge", "spike", "run-up", "jump", "soar",
+    # Economic growth / optimism
+    "recovery", "comeback", "expansion", "growth", "stimulus", "boom", "momentum", "tailwinds",
 
-    # Investor emotions / tone
-    "bullish", "optimism", "confidence", "momentum", "strength",
+    # Investor emotions / bullish tone
+    "bullish", "optimism", "confidence", "buying", "risk-on", "support", "strength", "resilient",
 
     # Records and highs
-    "record high", "all-time high", "breakout", "new peak", "milestone",
+    "record high", "all-time high", "new peak", "historic high", "milestone", "breakthrough", "beating estimates",
 
-    # Recovery or reversal signals
-    "rebound", "recovery", "bounce back", "comeback", "upswing"
+    # Market performance terms
+    "gains", "up", "advance", "outperform", "upgrade", "bull market", "ripping", "winning streak"
 ]
 
 
