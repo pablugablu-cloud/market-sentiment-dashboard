@@ -35,7 +35,7 @@ def fetch_rsi():
         return None
 
 # 3. Google Trends
-def fetch_google_trends(term="stock market crash"):
+def fetch_google_trends(term="market crash"):
     try:
         py = TrendReq(hl="en-US", tz=360)
         py.build_payload([term], timeframe="now 7-d")
@@ -115,7 +115,7 @@ cols = st.columns(5)
 for col, (name, val, lbl, desc) in zip(cols, [
     ("VIX (Vol)",   vix,    None, ">30 = Elevated Fear"),
     ("RSI (S&P)",   rsi,    None, ">70 Overbought / <35 Oversold"),
-    ("GoogleTrends",trds,   None, "Search interest"),
+    ("GoogleTrends",trds,   None, "Search interest: market crash"),
     ("NewsSent",    news,   nlbl, "Bull vs. Bear headlines"),
     ("Put/CallRatio",pcr,   None, "<0.7 Greed, >1.2 Fear"),
 ]):
