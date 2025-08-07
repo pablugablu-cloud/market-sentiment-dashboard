@@ -35,7 +35,7 @@ def fetch_rsi():
         return None
 
 # 3. Google Trends
-def fetch_google_trends(term="market crash"):
+def fetch_google_trends(term="stock market crash"):
     try:
         py = TrendReq(hl="en-US", tz=360)
         py.build_payload([term], timeframe="now 7-d")
