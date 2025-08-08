@@ -54,45 +54,27 @@ def fetch_news_sentiment():
     try:
         na = NewsApiClient(api_key=key)
         arts = na.get_everything(q="stock market", language="en", page_size=25)["articles"]
+
         bears = [
-    # Market crashes and collapses
-    "crash", "collapse", "meltdown", "plunge", "freefall", "bloodbath", "nosedive", "sell-off",
-
-    # Economic stress
-    "recession", "slowdown", "downturn", "stagflation", "deflation", "default", "credit crunch",
-
-    # Investor emotions / fear signals
-    "panic", "fear", "uncertainty", "turmoil", "concern", "risk-off", "bearish", "pessimism", "jitters",
-
-    # Volatility and instability
-    "volatility", "instability", "turbulence", "shock", "chaos", "fragile",
-
-    # Market losses / negatives
-    "losses", "decline", "drop", "slump", "dip", "red", "cut", "plummeting", "downgrade", "underperform"
-]
+            "crash", "collapse", "meltdown", "plunge", "freefall", "bloodbath", "nosedive", "sell-off",
+            "recession", "slowdown", "downturn", "stagflation", "deflation", "default", "credit crunch",
+            "panic", "fear", "uncertainty", "turmoil", "concern", "risk-off", "bearish", "pessimism", "jitters",
+            "volatility", "instability", "turbulence", "shock", "chaos", "fragile",
+            "losses", "decline", "drop", "slump", "dip", "red", "cut", "plummeting", "downgrade", "underperform"
+        ]
 
         bulls = [
-    # Market gains and breakouts
-    "rally", "surge", "soar", "jump", "bounce", "run-up", "breakout", "rebound", "uptrend", "green",
-
-    # Economic growth / optimism
-    "recovery", "comeback", "expansion", "growth", "stimulus", "boom", "momentum", "tailwinds",
-
-    # Investor emotions / bullish tone
-    "bullish", "optimism", "confidence", "buying", "risk-on", "support", "strength", "resilient",
-
-    # Records and highs
-    "record high", "all-time high", "new peak", "historic high", "milestone", "breakthrough", "beating estimates",
-
-    # Market performance terms
-    "gains", "up", "advance", "outperform", "upgrade", "bull market", "ripping", "winning streak"
-]
-
+            "rally", "surge", "soar", "jump", "bounce", "run-up", "breakout", "rebound", "uptrend", "green",
+            "recovery", "comeback", "expansion", "growth", "stimulus", "boom", "momentum", "tailwinds",
+            "bullish", "optimism", "confidence", "buying", "risk-on", "support", "strength", "resilient",
+            "record high", "all-time high", "new peak", "historic high", "milestone", "breakthrough", "beating estimates",
+            "gains", "up", "advance", "outperform", "upgrade", "bull market", "ripping", "winning streak"
+        ]
 
         b = sum(any(w in a["title"].lower() for w in bears) for a in arts)
         u = sum(any(w in a["title"].lower() for w in bulls) for a in arts)
-        score = max(0, min(100, 50 + 2*(u-b)))
-        lbl = "Bullish" if score>60 else "Bearish" if score<40 else "Mixed"
+        score = max(0, min(100, 50 + 2 * (u - b)))
+        lbl = "Bullish" if score > 60 else "Bearish" if score < 40 else "Mixed"
         return score, lbl
     except Exception as e:
         st.warning(f"NewsAPI error: {e}")
@@ -109,10 +91,9 @@ def fetch_pcr():
         "securities=id%3AI%3ACBOEEPCR%2Cinclude%3Atrue%2C%2C&maxPoints=594"
     )
     try:
-        r = requests.get(url, timeout=10, headers={"User-Agent":"Mozilla/5.0"})
+        r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
         r.raise_for_status()
         js = r.json()
-        # navigate into chart_data → first series → last_value
         last = js["chart_data"][0][0]["last_value"]
         return float(last), None
     except Exception as e:
@@ -128,29 +109,29 @@ def fetch_bond_yields():
         "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1"
     )
     try:
-        r = requests.get(url, timeout=10, headers={"User-Agent":"Mozilla/5.0"})
+        r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
         r.raise_for_status()
         quotes = r.json()["FormattedQuoteResult"]["FormattedQuote"]
         return {q["symbol"]: float(q["last"].strip("%")) for q in quotes}, None
     except Exception as e:
         return {}, f"Bond fetch error: {e}"
 
-# ――― Fetch all data ―――
-vix   = fetch_vix()
-rsi   = fetch_rsi()
-trds  = fetch_google_trends()
+# Fetch all data
+vix     = fetch_vix()
+rsi     = fetch_rsi()
+trds    = fetch_google_trends()
 news, nlbl = fetch_news_sentiment()
-pcr, pcr_err   = fetch_pcr()
-yields, y_err  = fetch_bond_yields()
+pcr, pcr_err = fetch_pcr()
+yields, y_err = fetch_bond_yields()
 
-# ――― Top-line metrics ―――
+# Display metrics
 cols = st.columns(5)
 for col, (name, val, lbl, desc) in zip(cols, [
-    ("VIX (Vol)",   vix,    None, ">30 = Elevated Fear"),
-    ("RSI (S&P)",   rsi,    None, ">70 Overbought / <35 Oversold"),
-    ("GoogleTrends",trds,   None, "Search interest: market crash"),
-    ("NewsSent",    news,   nlbl, "Bull vs. Bear headlines"),
-    ("Put/CallRatio",pcr,   None, "<0.7 Greed, >1.2 Fear"),
+    ("VIX (Vol)", vix, None, ">30 = Elevated Fear"),
+    ("RSI (S&P)", rsi, None, ">70 Overbought / <35 Oversold"),
+    ("GoogleTrends", trds, None, "Search interest: market crash"),
+    ("NewsSent", news, nlbl, "Bull vs. Bear headlines"),
+    ("Put/CallRatio", pcr, None, "<0.7 Greed, >1.2 Fear"),
 ]):
     with col:
         dv = val if val is not None else "N/A"
@@ -158,7 +139,7 @@ for col, (name, val, lbl, desc) in zip(cols, [
         with st.expander(f"ℹ️ What is {name}?"):
             st.write(desc)
 
-# ――― Bond yields table ―――
+# Bond yields
 st.markdown("### 🏦 U.S. Treasury Yields")
 if yields:
     df_y = pd.DataFrame.from_dict(yields, orient="index", columns=["Yield (%)"])
@@ -168,30 +149,41 @@ else:
 
 st.markdown("---")
 
-# ――― Buffett & Tom Lee signals ―――
+# Safe signal functions
 def buffett_sig(vix, rsi, tr, ns, pcr, yd):
     fear = sum([
-        vix>28  if vix else False,
-        tr>80   if tr else False,
-        ns<35   if ns else False,
-        pcr>1.1 if pcr else False,
-        yd.get("US2Y",0)>yd.get("US10Y",0)
+        (vix is not None and vix > 28),
+        (tr is not None and tr > 80),
+        (ns is not None and ns < 35),
+        (pcr is not None and pcr > 1.1),
+        (isinstance(yd, dict) and yd.get("US2Y", 0) > yd.get("US10Y", 0))
     ])
-    if rsi<35 and fear>=2: return "🟢 Buffett: Really Good Time to Buy"
-    if rsi<40 and fear>=1: return "🟡 Buffett: Good Time to Accumulate"
-    if 40<=rsi<=60 and 16<vix<28 and 35<=ns<=65: return "⚪ Buffett: Wait, Stay Patient"
-    if rsi>70 and ns>60 and tr<20: return "🔴 Buffett: Market Overheated"
+    if (rsi is not None and rsi < 35) and fear >= 2:
+        return "🟢 Buffett: Really Good Time to Buy"
+    if (rsi is not None and rsi < 40) and fear >= 1:
+        return "🟡 Buffett: Good Time to Accumulate"
+    if (rsi is not None and 40 <= rsi <= 60) and (vix is not None and 16 < vix < 28) and (ns is not None and 35 <= ns <= 65):
+        return "⚪ Buffett: Wait, Stay Patient"
+    if (rsi is not None and rsi > 70) and (ns is not None and ns > 60) and (tr is not None and tr < 20):
+        return "🔴 Buffett: Market Overheated"
     return "🔴 Buffett: Hold Off"
 
 def tomlee_sig(vix, rsi, tr, ns, pcr, yd):
     score = sum([
-        vix>22, rsi<45, tr>60, ns<50,
-        pcr>1.0, yd.get("US2Y",0)>yd.get("US10Y",0)
+        (vix is not None and vix > 22),
+        (rsi is not None and rsi < 45),
+        (tr is not None and tr > 60),
+        (ns is not None and ns < 50),
+        (pcr is not None and pcr > 1.0),
+        (isinstance(yd, dict) and yd.get("US2Y", 0) > yd.get("US10Y", 0))
     ])
-    if score>=2: return "🟢 Tom Lee: Buy the Dip"
-    if vix<14 and rsi>70 and ns>60: return "🔴 Tom Lee: Too Hot"
+    if score >= 2:
+        return "🟢 Tom Lee: Buy the Dip"
+    if (vix is not None and vix < 14) and (rsi is not None and rsi > 70) and (ns is not None and ns > 60):
+        return "🔴 Tom Lee: Too Hot"
     return "⚪ Tom Lee: Stay Invested"
 
+# Show signals
 st.markdown("## 🧭 Buffett-Style Signal")
 st.success(buffett_sig(vix, rsi, trds, news, pcr or 0, yields))
 with st.expander("Buffett Philosophy"):
