@@ -28,402 +28,394 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-LIGHT_THEME = {
-    "name": "light",
-    "bg": "#f5f7fb",
-    "bg2": "#ffffff",
+
+# ============================================================
+# Theme
+# ============================================================
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = False
+
+LIGHT = {
+    "bg": "#f6f8fb",
+    "surface": "#ffffff",
+    "surface2": "#f9fafb",
     "text": "#111827",
-    "muted": "#6b7280",
+    "muted": "#667085",
     "border": "rgba(17,24,39,.08)",
-    "card": "rgba(255,255,255,.90)",
-    "card2": "rgba(255,255,255,.96)",
-    "shadow": "0 12px 34px rgba(15,23,42,.08)",
+    "shadow": "0 18px 55px rgba(16,24,40,.08)",
     "green": "#16a34a",
     "yellow": "#f59e0b",
     "red": "#ef4444",
     "blue": "#2563eb",
-    "accent": "#0f172a",
-    "hero_grad_1": "rgba(37,99,235,.10)",
-    "hero_grad_2": "rgba(22,163,74,.10)",
 }
-
-DARK_THEME = {
-    "name": "dark",
-    "bg": "#070b14",
-    "bg2": "#0d1324",
+DARK = {
+    "bg": "#080b12",
+    "surface": "#101622",
+    "surface2": "#151c2a",
     "text": "#f8fafc",
-    "muted": "rgba(248,250,252,.72)",
+    "muted": "#9ca3af",
     "border": "rgba(255,255,255,.09)",
-    "card": "rgba(255,255,255,.05)",
-    "card2": "rgba(255,255,255,.06)",
-    "shadow": "0 14px 40px rgba(0,0,0,.28)",
+    "shadow": "0 20px 60px rgba(0,0,0,.36)",
     "green": "#22c55e",
     "yellow": "#fbbf24",
-    "red": "#f87171",
+    "red": "#fb7185",
     "blue": "#60a5fa",
-    "accent": "#f8fafc",
-    "hero_grad_1": "rgba(37,99,235,.15)",
-    "hero_grad_2": "rgba(22,163,74,.12)",
 }
-
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = False
-
-theme = DARK_THEME if st.session_state.dark_mode else LIGHT_THEME
+T = DARK if st.session_state.dark_mode else LIGHT
 
 
-def apply_css(theme_dict):
-    st.markdown(
-        f"""
+def css(t):
+    st.markdown(f"""
 <style>
-    .stApp {{
-        background:
-            radial-gradient(circle at 8% 5%, {theme_dict["hero_grad_1"]}, transparent 26%),
-            radial-gradient(circle at 92% 6%, {theme_dict["hero_grad_2"]}, transparent 28%),
-            linear-gradient(135deg, {theme_dict["bg"]} 0%, {theme_dict["bg2"]} 54%, {theme_dict["bg"]} 100%);
-        color: {theme_dict["text"]};
-    }}
-    [data-testid="stHeader"] {{ background: rgba(0,0,0,0); }}
-    [data-testid="stToolbar"] {{ display: none; }}
-    .block-container {{
-        padding-top: 1.6rem;
-        padding-bottom: 3rem;
-        max-width: 1500px;
-    }}
-    .hero {{
-        border: 1px solid {theme_dict["border"]};
-        border-radius: 28px;
-        padding: 26px 28px;
-        background: linear-gradient(135deg, {theme_dict["card2"]}, {theme_dict["card"]});
-        box-shadow: {theme_dict["shadow"]};
-        margin-bottom: 16px;
-    }}
-    .hero h1 {{
-        font-size: 42px;
-        line-height: 1.04;
-        margin: 0;
-        letter-spacing: -1.1px;
-        color: {theme_dict["text"]};
-    }}
-    .muted {{
-        color: {theme_dict["muted"]};
-        font-size: 14px;
-        margin-top: 6px;
-    }}
-    .hook-card {{
-        border-radius: 28px;
-        padding: 28px 28px;
-        border: 1px solid {theme_dict["border"]};
-        background: linear-gradient(135deg, {theme_dict["card2"]}, {theme_dict["card"]});
-        box-shadow: {theme_dict["shadow"]};
-        min-height: 360px;
-    }}
-    .hook-title {{
-        color: {theme_dict["muted"]};
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: .7px;
-        text-transform: uppercase;
-        margin-bottom: 8px;
-    }}
-    .hook-headline {{
-        color: {theme_dict["text"]};
-        font-size: 40px;
-        font-weight: 950;
-        line-height: 1.02;
-        letter-spacing: -1.2px;
-        margin-bottom: 12px;
-    }}
-    .hook-body {{
-        color: {theme_dict["text"]};
-        font-size: 17px;
-        line-height: 1.45;
-        margin-top: 12px;
-    }}
-    .hook-sub {{
-        color: {theme_dict["muted"]};
-        font-size: 15px;
-        line-height: 1.45;
-        margin-top: 12px;
-    }}
-    .pill {{
-        display: inline-block;
-        padding: 7px 12px;
-        border-radius: 999px;
-        font-weight: 900;
-        font-size: 12px;
-        letter-spacing: .2px;
-        margin-top: 8px;
-    }}
-    .pill-green {{
-        background: rgba(34,197,94,.12);
-        color: {theme_dict["green"]};
-        border: 1px solid rgba(34,197,94,.18);
-    }}
-    .pill-yellow {{
-        background: rgba(245,158,11,.12);
-        color: {theme_dict["yellow"]};
-        border: 1px solid rgba(245,158,11,.18);
-    }}
-    .pill-red {{
-        background: rgba(239,68,68,.12);
-        color: {theme_dict["red"]};
-        border: 1px solid rgba(239,68,68,.18);
-    }}
-    .pill-blue {{
-        background: rgba(37,99,235,.12);
-        color: {theme_dict["blue"]};
-        border: 1px solid rgba(37,99,235,.18);
-    }}
-    .small-card {{
-        border: 1px solid {theme_dict["border"]};
-        border-radius: 22px;
-        padding: 18px 18px;
-        background: {theme_dict["card"]};
-        box-shadow: {theme_dict["shadow"]};
-        min-height: 135px;
-    }}
-    .small-title {{
-        color: {theme_dict["muted"]};
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: .55px;
-        text-transform: uppercase;
-    }}
-    .small-value {{
-        color: {theme_dict["text"]};
-        font-size: 30px;
-        font-weight: 950;
-        letter-spacing: -.5px;
-        margin-top: 4px;
-    }}
-    .small-copy {{
-        color: {theme_dict["muted"]};
-        font-size: 13px;
-        line-height: 1.35;
-        margin-top: 6px;
-    }}
-    .section-title {{
-        color: {theme_dict["text"]};
-        font-size: 24px;
-        font-weight: 950;
-        letter-spacing: -.3px;
-        margin-top: 18px;
-        margin-bottom: 10px;
-    }}
-    .lens {{
-        border: 1px solid {theme_dict["border"]};
-        border-radius: 22px;
-        padding: 18px;
-        background: {theme_dict["card"]};
-        box-shadow: {theme_dict["shadow"]};
-        min-height: 156px;
-    }}
-    .lens-title {{
-        color: {theme_dict["muted"]};
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: .55px;
-        text-transform: uppercase;
-    }}
-    .lens-head {{
-        color: {theme_dict["text"]};
-        font-size: 22px;
-        font-weight: 950;
-        margin-top: 5px;
-        margin-bottom: 7px;
-    }}
-    .lens-copy {{
-        color: {theme_dict["muted"]};
-        font-size: 14px;
-        line-height: 1.42;
-    }}
-    .footer {{
-        color: {theme_dict["muted"]};
-        font-size: 12px;
-        margin-top: 28px;
-        padding-top: 18px;
-        border-top: 1px solid {theme_dict["border"]};
-    }}
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 8px;
-    }}
-    .stTabs [data-baseweb="tab"] {{
-        border-radius: 999px;
-        padding: 8px 16px;
-        background: {theme_dict["card"]};
-        border: 1px solid {theme_dict["border"]};
-        color: {theme_dict["text"]};
-    }}
-    div[data-testid="stDataFrame"] {{
-        border-radius: 18px;
-        overflow: hidden;
-    }}
+.stApp {{
+    background:
+      radial-gradient(circle at 0% 0%, rgba(37,99,235,.08), transparent 26%),
+      radial-gradient(circle at 100% 0%, rgba(22,163,74,.08), transparent 26%),
+      {t["bg"]};
+    color: {t["text"]};
+}}
+[data-testid="stHeader"] {{ background: rgba(0,0,0,0); }}
+[data-testid="stToolbar"] {{ display: none; }}
+.block-container {{
+    padding-top: 1.4rem;
+    max-width: 1320px;
+}}
+div[data-testid="stButton"] button {{
+    border-radius: 14px;
+    border: 1px solid {t["border"]};
+    background: {t["surface"]};
+    color: {t["text"]};
+    box-shadow: none;
+    height: 42px;
+}}
+.hero {{
+    background: {t["surface"]};
+    border: 1px solid {t["border"]};
+    border-radius: 28px;
+    box-shadow: {t["shadow"]};
+    padding: 28px 30px;
+    margin: 10px 0 18px;
+}}
+.hero-title {{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 40px;
+    font-weight: 950;
+    letter-spacing: -1.3px;
+    color: {t["text"]};
+}}
+.hero-sub {{
+    color: {t["muted"]};
+    font-size: 14px;
+    margin-top: 10px;
+}}
+.grid-card {{
+    background: {t["surface"]};
+    border: 1px solid {t["border"]};
+    border-radius: 28px;
+    box-shadow: {t["shadow"]};
+    padding: 28px;
+    min-height: 318px;
+}}
+.kicker {{
+    color: {t["muted"]};
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .75px;
+}}
+.action-word {{
+    font-size: 48px;
+    font-weight: 1000;
+    letter-spacing: -1.8px;
+    color: {t["text"]};
+    line-height: 1;
+    margin-top: 12px;
+}}
+.main-copy {{
+    color: {t["text"]};
+    font-size: 18px;
+    line-height: 1.48;
+    margin-top: 18px;
+}}
+.sub-copy {{
+    color: {t["muted"]};
+    font-size: 14px;
+    line-height: 1.45;
+    margin-top: 12px;
+}}
+.badge {{
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 900;
+    margin-top: 18px;
+}}
+.badge-green {{ color: {t["green"]}; background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.18); }}
+.badge-yellow {{ color: {t["yellow"]}; background: rgba(245,158,11,.13); border: 1px solid rgba(245,158,11,.20); }}
+.badge-red {{ color: {t["red"]}; background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.18); }}
+.badge-blue {{ color: {t["blue"]}; background: rgba(37,99,235,.12); border: 1px solid rgba(37,99,235,.18); }}
+
+.score-card {{
+    background: {t["surface"]};
+    border: 1px solid {t["border"]};
+    border-radius: 28px;
+    box-shadow: {t["shadow"]};
+    padding: 28px;
+    min-height: 318px;
+}}
+.score-top {{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}}
+.score-label {{
+    color: {t["muted"]};
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .75px;
+}}
+.score-number {{
+    font-size: 86px;
+    line-height: .9;
+    font-weight: 1000;
+    letter-spacing: -3px;
+    color: {t["text"]};
+}}
+.score-status {{
+    color: {t["text"]};
+    font-size: 30px;
+    font-weight: 950;
+    letter-spacing: -1px;
+    text-align: right;
+}}
+.meter {{
+    position: relative;
+    height: 18px;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 34px;
+    background: linear-gradient(90deg, {t["green"]} 0%, {t["green"]} 33%, {t["yellow"]} 33%, {t["yellow"]} 66%, {t["red"]} 66%, {t["red"]} 100%);
+}}
+.marker {{
+    position: relative;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: {t["text"]};
+    border: 4px solid {t["surface"]};
+    box-shadow: 0 8px 22px rgba(0,0,0,.25);
+    margin-top: -18px;
+}}
+.scale {{
+    display: flex;
+    justify-content: space-between;
+    color: {t["muted"]};
+    font-size: 12px;
+    font-weight: 800;
+    margin-top: 11px;
+}}
+.score-note {{
+    color: {t["muted"]};
+    font-size: 15px;
+    line-height: 1.45;
+    margin-top: 26px;
+}}
+.section {{
+    color: {t["text"]};
+    font-size: 22px;
+    font-weight: 950;
+    letter-spacing: -.4px;
+    margin: 22px 0 10px;
+}}
+.metric-card {{
+    background: {t["surface"]};
+    border: 1px solid {t["border"]};
+    border-radius: 22px;
+    box-shadow: 0 10px 32px rgba(16,24,40,.06);
+    padding: 18px;
+    min-height: 134px;
+}}
+.metric-name {{
+    color: {t["muted"]};
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+}}
+.metric-value {{
+    color: {t["text"]};
+    font-size: 30px;
+    font-weight: 950;
+    margin-top: 5px;
+}}
+.metric-help {{
+    color: {t["muted"]};
+    font-size: 13px;
+    line-height: 1.35;
+    margin-top: 8px;
+}}
+.lens-card {{
+    background: {t["surface"]};
+    border: 1px solid {t["border"]};
+    border-radius: 22px;
+    box-shadow: 0 10px 32px rgba(16,24,40,.06);
+    padding: 20px;
+    min-height: 145px;
+}}
+.lens-head {{
+    color: {t["text"]};
+    font-size: 20px;
+    font-weight: 950;
+    margin-top: 4px;
+}}
+.lens-copy {{
+    color: {t["muted"]};
+    font-size: 14px;
+    line-height: 1.42;
+    margin-top: 8px;
+}}
+.footer {{
+    color: {t["muted"]};
+    font-size: 12px;
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid {t["border"]};
+}}
+.stTabs [data-baseweb="tab-list"] {{ gap: 8px; }}
+.stTabs [data-baseweb="tab"] {{
+    border-radius: 999px;
+    background: {t["surface"]};
+    border: 1px solid {t["border"]};
+    color: {t["text"]};
+}}
 </style>
-        """,
-        unsafe_allow_html=True,
-    )
+""", unsafe_allow_html=True)
 
 
-apply_css(theme)
+css(T)
 
 
-def safe_float(value):
+# ============================================================
+# Helpers
+# ============================================================
+def safe_float(v):
     try:
-        if value is None:
+        if v is None:
             return None
-        value = float(value)
-        if math.isnan(value):
+        v = float(v)
+        if math.isnan(v):
             return None
-        return value
+        return v
     except Exception:
         return None
 
 
-def safe_round(value, digits=2):
-    value = safe_float(value)
-    if value is None:
-        return None
-    return round(value, digits)
+def safe_round(v, digits=2):
+    v = safe_float(v)
+    return None if v is None else round(v, digits)
 
 
-def clamp(value, low=0, high=100):
-    value = safe_float(value)
-    if value is None:
-        return None
-    return max(low, min(high, value))
+def clamp(v, lo=0, hi=100):
+    v = safe_float(v)
+    return None if v is None else max(lo, min(hi, v))
 
 
-def fmt(value, suffix="", digits=2):
-    value = safe_float(value)
-    if value is None:
+def fmt(v, suffix="", digits=2):
+    v = safe_float(v)
+    if v is None:
         return "N/A"
-    if digits == 0:
-        return f"{value:,.0f}{suffix}"
-    return f"{value:,.{digits}f}{suffix}"
+    return f"{v:,.0f}{suffix}" if digits == 0 else f"{v:,.{digits}f}{suffix}"
 
 
-def score_from_range(value, points):
-    value = safe_float(value)
-    if value is None:
+def score_from_range(v, points):
+    v = safe_float(v)
+    if v is None:
         return None
-
     points = sorted(points, key=lambda x: x[0])
-
-    if value <= points[0][0]:
+    if v <= points[0][0]:
         return float(points[0][1])
-    if value >= points[-1][0]:
+    if v >= points[-1][0]:
         return float(points[-1][1])
-
     for (x1, y1), (x2, y2) in zip(points, points[1:]):
-        if x1 <= value <= x2:
-            pct = (value - x1) / (x2 - x1)
-            return float(y1 + pct * (y2 - y1))
+        if x1 <= v <= x2:
+            pct = (v - x1) / (x2 - x1)
+            return y1 + pct * (y2 - y1)
     return None
 
 
-def score_label(score):
+def label(score):
     if score is None:
-        return "Unknown", "pill-blue"
-    if score <= 33:
-        return "Fear", "pill-green"
-    if score <= 66:
-        return "Neutral", "pill-yellow"
-    return "Greed", "pill-red"
-
-
-def detailed_label(score):
-    if score is None:
-        return "Unknown", "pill-blue"
+        return "Unknown", "badge-blue"
     if score <= 20:
-        return "Extreme Fear", "pill-green"
+        return "Extreme Fear", "badge-green"
     if score <= 33:
-        return "Fear", "pill-green"
-    if score <= 50:
-        return "Slight Fear", "pill-yellow"
+        return "Fear", "badge-green"
     if score <= 66:
-        return "Neutral", "pill-yellow"
+        return "Neutral", "badge-yellow"
     if score <= 80:
-        return "Greed", "pill-red"
-    return "Extreme Greed", "pill-red"
+        return "Greed", "badge-red"
+    return "Extreme Greed", "badge-red"
 
 
-def simple_action(score):
+def action(score):
     if score is None:
-        return ("WAIT", "Data is incomplete right now. Stick with your normal investing plan.", "pill-blue")
+        return "WAIT", "Data is incomplete. Use your normal buying plan until signals refresh cleanly.", "badge-blue"
     if score <= 20:
-        return ("BUY MORE", "Fear is high. This is one of the better times to add in tranches.", "pill-green")
+        return "BUY MORE", "Fear is high. This is a good setup to deploy a larger taxable tranche.", "badge-green"
     if score <= 33:
-        return ("BUY A LITTLE MORE", "Sentiment is fearful. Good setup for a slightly bigger buy than normal.", "pill-green")
+        return "BUY A LITTLE MORE", "Market sentiment is fearful. Slightly increase your scheduled buy.", "badge-green"
     if score <= 66:
-        return ("KEEP BUYING NORMALLY", "Nothing special. Just stay disciplined and keep buying on schedule.", "pill-yellow")
+        return "BUY NORMALLY", "No major edge. Keep the plan simple and stay consistent.", "badge-yellow"
     if score <= 80:
-        return ("BUY SMALLER", "Market is getting hot. Keep buying, but size down large taxable buys.", "pill-red")
-    return ("DON'T CHASE", "Sentiment is stretched. Keep dry powder and avoid oversized buys.", "pill-red")
+        return "BUY SMALLER", "Market is getting hot. Keep buying, but avoid a big lump-sum taxable buy.", "badge-red"
+    return "DON’T CHASE", "Sentiment is stretched. Keep dry powder and wait for a better setup.", "badge-red"
 
 
-def card(title, value, status, css_class, explanation):
-    st.markdown(
-        f"""
-<div class="small-card">
-    <div class="small-title">{title}</div>
-    <div class="small-value">{value}</div>
-    <div class="pill {css_class}">{status}</div>
-    <div class="small-copy">{explanation}</div>
+def mini_class(name, value):
+    if name == "VIX":
+        if value is None: return "N/A", "badge-blue"
+        if value < 14: return "Too Calm", "badge-red"
+        if value < 20: return "Calm", "badge-yellow"
+        if value < 28: return "Elevated", "badge-yellow"
+        return "Fearful", "badge-green"
+    if name == "RSI":
+        if value is None: return "N/A", "badge-blue"
+        if value < 35: return "Oversold", "badge-green"
+        if value <= 65: return "Healthy", "badge-yellow"
+        return "Hot", "badge-red"
+    if name == "Trend":
+        if value is None: return "N/A", "badge-blue"
+        if value < -3: return "Below Trend", "badge-green"
+        if value <= 8: return "Near Trend", "badge-yellow"
+        return "Extended", "badge-red"
+    if name == "PutCall":
+        if value is None: return "N/A", "badge-blue"
+        if value < .65: return "Greedy", "badge-red"
+        if value <= 1.1: return "Balanced", "badge-yellow"
+        return "Fearful", "badge-green"
+    return "N/A", "badge-blue"
+
+
+def metric_card(title, value, badge, badge_class, copy):
+    st.markdown(f"""
+<div class="metric-card">
+  <div class="metric-name">{title}</div>
+  <div class="metric-value">{value}</div>
+  <div class="badge {badge_class}">{badge}</div>
+  <div class="metric-help">{copy}</div>
 </div>
-        """,
-        unsafe_allow_html=True,
-    )
+""", unsafe_allow_html=True)
 
 
-def classify_vix(vix):
-    if vix is None:
-        return "Unavailable", "pill-blue"
-    if vix < 14:
-        return "Very Calm", "pill-red"
-    if vix < 20:
-        return "Calm", "pill-yellow"
-    if vix < 28:
-        return "Elevated", "pill-yellow"
-    return "Fearful", "pill-green"
-
-
-def classify_rsi(rsi):
-    if rsi is None:
-        return "Unavailable", "pill-blue"
-    if rsi < 35:
-        return "Oversold", "pill-green"
-    if rsi < 45:
-        return "Soft", "pill-green"
-    if rsi <= 65:
-        return "Healthy", "pill-yellow"
-    if rsi <= 72:
-        return "Hot", "pill-red"
-    return "Overbought", "pill-red"
-
-
-def classify_distance(dist):
-    if dist is None:
-        return "Unavailable", "pill-blue"
-    if dist < -8:
-        return "Cheap vs Trend", "pill-green"
-    if dist < -2:
-        return "Below Trend", "pill-green"
-    if dist <= 8:
-        return "Near Trend", "pill-yellow"
-    return "Extended", "pill-red"
-
-
-def classify_pcr(pcr):
-    if pcr is None:
-        return "Unavailable", "pill-blue"
-    if pcr < 0.65:
-        return "Call Chasing", "pill-red"
-    if pcr <= 1.10:
-        return "Balanced", "pill-yellow"
-    return "Fearful", "pill-green"
-
-
+# ============================================================
+# Data
+# ============================================================
 @st.cache_data(ttl=900, show_spinner=False)
 def fetch_sp500():
     df = yf.Ticker("^GSPC").history(period="1y", interval="1d", auto_adjust=False)
@@ -437,14 +429,12 @@ def fetch_sp500():
     last = df.iloc[-1]
     close = safe_round(last["Close"], 2)
     rsi = safe_round(last["RSI"], 2)
-    sma200 = safe_round(last["SMA_200"], 2)
-    dist_200d = None
-    if close is not None and sma200 not in [None, 0]:
-        dist_200d = safe_round(((close - sma200) / sma200) * 100, 2)
+    sma = safe_round(last["SMA_200"], 2)
+    dist = safe_round(((close - sma) / sma) * 100, 2) if close and sma else None
     df = df.reset_index()
     if "Date" not in df.columns:
         df = df.rename(columns={df.columns[0]: "Date"})
-    return {"close": close, "rsi": rsi, "sma200": sma200, "dist_200d": dist_200d, "history": df}
+    return {"close": close, "rsi": rsi, "sma": sma, "dist": dist, "history": df}
 
 
 @st.cache_data(ttl=900, show_spinner=False)
@@ -466,10 +456,9 @@ def fetch_pcr():
         "securities=id%3AI%3ACBOEEPCR%2Cinclude%3Atrue%2C%2C&maxPoints=594"
     )
     try:
-        response = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-        response.raise_for_status()
-        data = response.json()
-        return safe_round(data["chart_data"][0][0]["last_value"], 2)
+        r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+        r.raise_for_status()
+        return safe_round(r.json()["chart_data"][0][0]["last_value"], 2)
     except Exception:
         return None
 
@@ -483,22 +472,16 @@ def fetch_yields():
         "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1"
     )
     try:
-        response = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-        response.raise_for_status()
-        quotes = response.json()["FormattedQuoteResult"]["FormattedQuote"]
-        yields = {}
-        for q in quotes:
-            symbol = q.get("symbol")
-            last = q.get("last")
-            if symbol and last:
-                yields[symbol] = safe_round(str(last).strip("%"), 3)
-        return yields
+        r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+        r.raise_for_status()
+        quotes = r.json()["FormattedQuoteResult"]["FormattedQuote"]
+        return {q["symbol"]: safe_round(str(q["last"]).strip("%"), 3) for q in quotes if q.get("symbol") and q.get("last")}
     except Exception:
         return {}
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def fetch_google_trends(term="stock market crash"):
+def fetch_trends(term="stock market crash"):
     if TrendReq is None:
         return None
     try:
@@ -513,212 +496,174 @@ def fetch_google_trends(term="stock market crash"):
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
-def fetch_news_sentiment():
+def fetch_news():
     key = None
     try:
         key = st.secrets.get("NEWSAPI_KEY", None)
     except Exception:
-        key = None
-    if not key:
-        key = os.getenv("NEWSAPI_KEY")
+        pass
+    key = key or os.getenv("NEWSAPI_KEY")
     if not key or NewsApiClient is None:
         return None, "Optional"
 
-    bear_words = ["crash","collapse","meltdown","plunge","sell-off","recession","slowdown","downturn","panic","fear","turmoil","risk-off","bearish","volatility","instability","losses","decline","drop","slump","downgrade"]
-    bull_words = ["rally","surge","soar","rebound","recovery","growth","momentum","bullish","optimism","confidence","risk-on","strength","resilient","record high","all-time high","gains","advance","outperform","upgrade"]
+    bears = ["crash","collapse","meltdown","plunge","sell-off","recession","slowdown","panic","fear","turmoil","bearish","volatility","losses","decline","drop","downgrade"]
+    bulls = ["rally","surge","soar","rebound","recovery","growth","momentum","bullish","optimism","confidence","strength","record high","gains","outperform","upgrade"]
     try:
         client = NewsApiClient(api_key=key)
         articles = client.get_everything(q="S&P 500 OR stock market", language="en", page_size=40).get("articles", [])
-        titles = [(article.get("title") or "").lower() for article in articles]
-        bear_count = sum(any(word in title for word in bear_words) for title in titles)
-        bull_count = sum(any(word in title for word in bull_words) for title in titles)
-        score = int(clamp(50 + 3 * (bull_count - bear_count), 0, 100))
-        label = "Bullish" if score > 60 else "Bearish" if score < 40 else "Mixed"
-        return score, label
+        titles = [(a.get("title") or "").lower() for a in articles]
+        b = sum(any(w in t for w in bears) for t in titles)
+        u = sum(any(w in t for w in bulls) for t in titles)
+        s = int(clamp(50 + 3 * (u - b), 0, 100))
+        return s, "Bullish" if s > 60 else "Bearish" if s < 40 else "Mixed"
     except Exception:
         return None, "Unavailable"
 
 
-def build_score(vix, rsi, dist_200d, pcr, curve_spread, trends, news_score):
+def build_score(vix, rsi, dist, pcr, curve, trends, news):
     rows = [
-        {"Indicator":"VIX","Reading":fmt(vix),"Score":score_from_range(vix, [(12, 85), (18, 62), (25, 38), (35, 15), (50, 5)]),"Weight":0.24,"Why it matters":"Higher VIX means more fear. Fear often improves entry points."},
-        {"Indicator":"RSI","Reading":fmt(rsi),"Score":score_from_range(rsi, [(25, 10), (35, 25), (50, 50), (65, 72), (75, 90), (85, 100)]),"Weight":0.21,"Why it matters":"Momentum temperature. High RSI usually means the market is hot."},
-        {"Indicator":"S&P vs 200D","Reading":fmt(dist_200d, "%"),"Score":score_from_range(dist_200d, [(-20, 8), (-10, 20), (0, 48), (8, 68), (15, 84), (25, 96)]),"Weight":0.21,"Why it matters":"Tells you if the index is cheap or stretched vs long-term trend."},
-        {"Indicator":"Put/Call Ratio","Reading":fmt(pcr),"Score":score_from_range(pcr, [(0.55, 90), (0.75, 70), (0.95, 52), (1.15, 35), (1.40, 15)]),"Weight":0.15,"Why it matters":"Low ratio can mean options-driven greed. High ratio can mean fear."},
-        {"Indicator":"10Y - 2Y Curve","Reading":fmt(curve_spread, "%", 3),"Score":score_from_range(curve_spread, [(-1.2, 70), (-0.5, 58), (0, 50), (0.8, 45), (1.5, 48)]),"Weight":0.07,"Why it matters":"Macro backdrop. Helpful context, but not the main signal."},
-        {"Indicator":"Google Trends","Reading":fmt(trends, "", 0),"Score":score_from_range(trends, [(0, 72), (20, 62), (50, 45), (80, 25), (100, 10)]),"Weight":0.06,"Why it matters":"Crash-search spikes are a simple public fear signal."},
-        {"Indicator":"News Sentiment","Reading":fmt(news_score, "", 0),"Score":news_score,"Weight":0.06,"Why it matters":"Headline tone. Useful, but optional and noisy."},
+        {"Indicator":"VIX", "Reading":fmt(vix), "Score":score_from_range(vix, [(12,85),(18,62),(25,38),(35,15),(50,5)]), "Weight":.24, "Meaning":"Volatility/fear. High VIX usually improves entry points."},
+        {"Indicator":"RSI", "Reading":fmt(rsi), "Score":score_from_range(rsi, [(25,10),(35,25),(50,50),(65,72),(75,90),(85,100)]), "Weight":.21, "Meaning":"Momentum temperature. High RSI means hot."},
+        {"Indicator":"S&P vs 200D", "Reading":fmt(dist,"%"), "Score":score_from_range(dist, [(-20,8),(-10,20),(0,48),(8,68),(15,84),(25,96)]), "Weight":.21, "Meaning":"Distance from long-term trend."},
+        {"Indicator":"Put/Call", "Reading":fmt(pcr), "Score":score_from_range(pcr, [(0.55,90),(.75,70),(.95,52),(1.15,35),(1.4,15)]), "Weight":.15, "Meaning":"Low can mean call chasing. High can mean fear."},
+        {"Indicator":"10Y-2Y", "Reading":fmt(curve,"%",3), "Score":score_from_range(curve, [(-1.2,70),(-.5,58),(0,50),(.8,45),(1.5,48)]), "Weight":.07, "Meaning":"Macro context, not the whole decision."},
+        {"Indicator":"Google Trends", "Reading":fmt(trends,"",0), "Score":score_from_range(trends, [(0,72),(20,62),(50,45),(80,25),(100,10)]), "Weight":.06, "Meaning":"Crash-search interest. Spikes imply public fear."},
+        {"Indicator":"News", "Reading":fmt(news,"",0), "Score":news, "Weight":.06, "Meaning":"Optional headline tone."},
     ]
     df = pd.DataFrame(rows)
-    available = df.dropna(subset=["Score"]).copy()
-    if available.empty:
+    good = df.dropna(subset=["Score"]).copy()
+    if good.empty:
         return None, df
-    total_weight = available["Weight"].sum()
-    available["AdjWeight"] = available["Weight"] / total_weight
-    composite = int(round((available["Score"] * available["AdjWeight"]).sum()))
-    return int(clamp(composite, 0, 100)), df
+    good["AdjWeight"] = good["Weight"] / good["Weight"].sum()
+    score = int(round((good["Score"] * good["AdjWeight"]).sum()))
+    return int(clamp(score,0,100)), df
 
 
-def fear_greed_donut(score, theme_dict):
-    score = 50 if score is None else score
-    label, _ = score_label(score)
-    fig = go.Figure(
-        data=[
-            go.Pie(
-                values=[33, 33, 34],
-                labels=["Fear", "Neutral", "Greed"],
-                hole=0.76,
-                sort=False,
-                direction="clockwise",
-                marker=dict(
-                    colors=[theme_dict["green"], theme_dict["yellow"], theme_dict["red"]],
-                    line=dict(color=theme_dict["bg"], width=7)
-                ),
-                textinfo="label",
-                textfont=dict(size=15, color=theme_dict["text"]),
-                hovertemplate="%{label}<extra></extra>",
-            )
-        ]
-    )
-    fig.add_annotation(
-        text=f"<b>{score}</b><br><span style='font-size:16px'>{label}</span>",
-        x=0.5, y=0.50, showarrow=False,
-        font=dict(size=34, color=theme_dict["text"]),
-    )
-    fig.update_layout(
-        title=dict(text="Fear & Greed", x=0.5, y=0.96, font=dict(size=24, color=theme_dict["text"])),
-        showlegend=False,
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        height=360,
-        margin=dict(l=10, r=10, t=40, b=20),
-    )
-    return fig
-
-
-c1, c2, c3 = st.columns([0.72, 0.12, 0.16])
+# ============================================================
+# Controls
+# ============================================================
+c1, c2, c3 = st.columns([.70, .15, .15])
 with c2:
-    st.toggle("🌙 Dark mode", key="dark_mode")
+    st.toggle("Dark mode", key="dark_mode")
 with c3:
-    if st.button("🔄 Refresh", use_container_width=True):
+    if st.button("Refresh", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
-theme = DARK_THEME if st.session_state.dark_mode else LIGHT_THEME
-apply_css(theme)
+T = DARK if st.session_state.dark_mode else LIGHT
+css(T)
 
 with st.spinner("Loading market read..."):
     spx = fetch_sp500()
     vix = fetch_vix()
     pcr = fetch_pcr()
     yields = fetch_yields()
-    trends = fetch_google_trends("stock market crash")
-    news_score, news_label = fetch_news_sentiment()
+    trends = fetch_trends()
+    news_score, news_label = fetch_news()
 
 if spx is None:
-    st.error("Could not load S&P 500 data from Yahoo Finance. Please refresh in a few minutes.")
+    st.error("Could not load S&P 500 data from Yahoo Finance. Refresh in a few minutes.")
     st.stop()
 
-spx_close = spx["close"]
-rsi = spx["rsi"]
-sma200 = spx["sma200"]
-dist_200d = spx["dist_200d"]
 us2y = yields.get("US2Y") if yields else None
 us10y = yields.get("US10Y") if yields else None
-curve_spread = safe_round(us10y - us2y, 3) if us2y is not None and us10y is not None else None
+curve = safe_round(us10y - us2y, 3) if us2y is not None and us10y is not None else None
 
-score, breakdown = build_score(vix, rsi, dist_200d, pcr, curve_spread, trends, news_score)
-main_label, main_pill = score_label(score)
-full_label, full_pill = detailed_label(score)
-action_title, action_text, action_pill = simple_action(score)
+score, breakdown = build_score(vix, spx["rsi"], spx["dist"], pcr, curve, trends, news_score)
+status, status_class = label(score)
+act, act_copy, act_class = action(score)
+marker_left = 0 if score is None else max(0, min(100, score))
 
-st.markdown(
-    f"""
+# ============================================================
+# UI
+# ============================================================
+st.markdown(f"""
 <div class="hero">
-    <h1>📊 Market Sentiment Pro</h1>
-    <div class="muted">
-        Super simple investing read for taxable buys. Light mode by default, clean design, and one clear answer first.
-        Last updated: {datetime.now().strftime("%b %d, %Y %I:%M %p")}
-    </div>
+  <div class="hero-title">📊 Market Sentiment Pro</div>
+  <div class="hero-sub">A clean taxable-buying signal. One read first, details below. Updated {datetime.now().strftime("%b %d, %Y %I:%M %p")}.</div>
 </div>
-    """,
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
-left, right = st.columns([0.56, 0.44])
+left, right = st.columns([.52,.48])
 with left:
-    st.markdown(
-        f"""
-<div class="hook-card">
-    <div class="hook-title">Clear Action Read</div>
-    <div class="hook-headline">{action_title}</div>
-    <div class="pill {action_pill}">{full_label} · Score {score if score is not None else "N/A"}/100</div>
-    <div class="hook-body"><b>What it means:</b> {action_text}</div>
-    <div class="hook-sub"><b>Keep it simple:</b> use this app to decide whether to buy <b>more</b>, <b>normal</b>, or <b>smaller</b>. Do not use it to guess the exact bottom.</div>
-    <div class="hook-sub"><b>Right now:</b> sentiment says <b>{main_label.lower()}</b>, so the app is telling you to <b>{action_title.lower()}</b>.</div>
+    st.markdown(f"""
+<div class="grid-card">
+  <div class="kicker">Clear Action Read</div>
+  <div class="action-word">{act}</div>
+  <div class="badge {act_class}">{status} · {score if score is not None else "N/A"}/100</div>
+  <div class="main-copy">{act_copy}</div>
+  <div class="sub-copy"><b>Simple rule:</b> this is not a prediction machine. It only tells you whether your next taxable buy should be bigger, normal, smaller, or paused.</div>
 </div>
-        """,
-        unsafe_allow_html=True,
-    )
+""", unsafe_allow_html=True)
+
 with right:
-    st.plotly_chart(fear_greed_donut(score, theme), use_container_width=True)
+    st.markdown(f"""
+<div class="score-card">
+  <div class="score-top">
+    <div>
+      <div class="score-label">Fear & Greed Score</div>
+      <div class="score-number">{score if score is not None else "N/A"}</div>
+    </div>
+    <div class="score-status">{status}</div>
+  </div>
+  <div class="meter"></div>
+  <div class="marker" style="left: calc({marker_left}% - 9px);"></div>
+  <div class="scale"><span>Fear</span><span>Neutral</span><span>Greed</span></div>
+  <div class="score-note">Green means better buying conditions. Yellow means stay on plan. Red means avoid chasing large buys.</div>
+</div>
+""", unsafe_allow_html=True)
 
-st.markdown('<div class="section-title">Quick Read</div>', unsafe_allow_html=True)
-q1, q2, q3, q4 = st.columns(4)
-vix_label, vix_css = classify_vix(vix)
-rsi_label, rsi_css = classify_rsi(rsi)
-dist_label, dist_css = classify_distance(dist_200d)
-pcr_label, pcr_css = classify_pcr(pcr)
-with q1:
-    card("VIX", fmt(vix), vix_label, vix_css, "Fear gauge. Higher usually means more fear.")
-with q2:
-    card("RSI", fmt(rsi), rsi_label, rsi_css, "Momentum read. Hot market = more caution.")
-with q3:
-    card("S&P vs 200D", fmt(dist_200d, "%"), dist_label, dist_css, "Shows if price is stretched vs long-term trend.")
-with q4:
-    card("Put/Call", fmt(pcr), pcr_label, pcr_css, "Options positioning. Low can mean greed; high can mean fear.")
+st.markdown('<div class="section">Quick Read</div>', unsafe_allow_html=True)
+a,b,c,d = st.columns(4)
+vix_b, vix_c = mini_class("VIX", vix)
+rsi_b, rsi_c = mini_class("RSI", spx["rsi"])
+trend_b, trend_c = mini_class("Trend", spx["dist"])
+pcr_b, pcr_c = mini_class("PutCall", pcr)
+with a:
+    metric_card("VIX", fmt(vix), vix_b, vix_c, "Fear gauge. Higher = more fear.")
+with b:
+    metric_card("RSI", fmt(spx["rsi"]), rsi_b, rsi_c, "Momentum temperature.")
+with c:
+    metric_card("S&P vs 200D", fmt(spx["dist"], "%"), trend_b, trend_c, "How stretched the market is.")
+with d:
+    metric_card("Put/Call", fmt(pcr), pcr_b, pcr_c, "Options sentiment.")
 
-st.markdown('<div class="section-title">Simple Investor Lens</div>', unsafe_allow_html=True)
-l1, l2, l3 = st.columns(3)
-buffett_copy = "Best setups usually come when fear is obvious. Be patient when markets are hot." if score is not None and score > 66 else "Fear is your friend if you are buying quality assets for the long term."
-tom_copy = "Momentum is hot. Tactical buyers should avoid chasing." if rsi is not None and rsi > 70 else "No extreme momentum signal right now. Stay measured."
-with l1:
-    st.markdown(f"""<div class="lens"><div class="lens-title">Buffett Lens</div><div class="lens-head">Be patient</div><div class="lens-copy">{buffett_copy}</div></div>""", unsafe_allow_html=True)
-with l2:
-    st.markdown("""<div class="lens"><div class="lens-title">Bogle Lens</div><div class="lens-head">Keep buying</div><div class="lens-copy">Stay invested in broad index funds. Use this score to size tranches, not to become a trader.</div></div>""", unsafe_allow_html=True)
-with l3:
-    st.markdown(f"""<div class="lens"><div class="lens-title">Tom Lee Lens</div><div class="lens-head">Watch momentum</div><div class="lens-copy">{tom_copy}</div></div>""", unsafe_allow_html=True)
+st.markdown('<div class="section">Investor Lens</div>', unsafe_allow_html=True)
+x,y,z = st.columns(3)
+with x:
+    st.markdown(f"""<div class="lens-card"><div class="kicker">Buffett Lens</div><div class="lens-head">Do not chase</div><div class="lens-copy">Great investors wait for better pitches. Red means patience. Green means start swinging in tranches.</div></div>""", unsafe_allow_html=True)
+with y:
+    st.markdown(f"""<div class="lens-card"><div class="kicker">Bogle Lens</div><div class="lens-head">Stay consistent</div><div class="lens-copy">Keep buying broad index funds. This app should size your buys, not turn you into a trader.</div></div>""", unsafe_allow_html=True)
+with z:
+    st.markdown(f"""<div class="lens-card"><div class="kicker">Tom Lee Lens</div><div class="lens-head">Respect momentum</div><div class="lens-copy">When markets are hot, avoid emotional lump sums. When fear spikes, tactical entry improves.</div></div>""", unsafe_allow_html=True)
 
-st.markdown('<div class="section-title">Why the Score Looks This Way</div>', unsafe_allow_html=True)
+st.markdown('<div class="section">Details</div>', unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["Score Breakdown", "S&P Trend", "Treasury Curve"])
 with tab1:
     df = breakdown.copy()
     df["Score"] = df["Score"].apply(lambda x: "N/A" if pd.isna(x) else round(float(x), 1))
-    df["Weight"] = df["Weight"].apply(lambda x: f"{int(round(float(x) * 100))}%")
+    df["Weight"] = df["Weight"].apply(lambda x: f"{int(round(float(x)*100))}%")
     st.dataframe(df, use_container_width=True, hide_index=True)
 with tab2:
-    history = spx["history"].copy()
+    hist = spx["history"]
     fig = go.Figure()
-    if "Date" in history.columns and "Close" in history.columns:
-        fig.add_trace(go.Scatter(x=history["Date"], y=history["Close"], mode="lines", name="S&P 500"))
-    if "Date" in history.columns and "SMA_200" in history.columns:
-        fig.add_trace(go.Scatter(x=history["Date"], y=history["SMA_200"], mode="lines", name="200D SMA"))
-    fig.update_layout(height=430, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font={"color": theme["text"]}, margin=dict(l=12, r=12, t=20, b=12), legend=dict(orientation="h", yanchor="bottom", y=1.02))
+    if "Date" in hist and "Close" in hist:
+        fig.add_trace(go.Scatter(x=hist["Date"], y=hist["Close"], mode="lines", name="S&P 500"))
+    if "Date" in hist and "SMA_200" in hist:
+        fig.add_trace(go.Scatter(x=hist["Date"], y=hist["SMA_200"], mode="lines", name="200D SMA"))
+    fig.update_layout(height=390, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font={"color":T["text"]}, margin=dict(l=10,r=10,t=20,b=10), legend=dict(orientation="h"))
     st.plotly_chart(fig, use_container_width=True)
 with tab3:
     if yields:
-        order = ["US1M", "US2M", "US3M", "US4M", "US6M", "US1Y", "US2Y", "US3Y", "US5Y", "US7Y", "US10Y", "US20Y", "US30Y"]
-        rows = [{"Maturity": m, "Yield (%)": yields.get(m)} for m in order if yields.get(m) is not None]
-        ydf = pd.DataFrame(rows)
-        if not ydf.empty and "Maturity" in ydf.columns and "Yield (%)" in ydf.columns:
-            st.dataframe(ydf, use_container_width=True, hide_index=True)
+        order = ["US1M","US2M","US3M","US4M","US6M","US1Y","US2Y","US3Y","US5Y","US7Y","US10Y","US20Y","US30Y"]
+        ydf = pd.DataFrame([{"Maturity":m, "Yield (%)":yields.get(m)} for m in order if yields.get(m) is not None])
+        st.dataframe(ydf, use_container_width=True, hide_index=True)
+        if not ydf.empty:
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=ydf["Maturity"], y=ydf["Yield (%)"], mode="lines+markers", name="Yield Curve"))
-            fig.update_layout(height=360, yaxis_title="Yield (%)", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font={"color": theme["text"]}, margin=dict(l=12, r=12, t=20, b=12))
+            fig.add_trace(go.Scatter(x=ydf["Maturity"], y=ydf["Yield (%)"], mode="lines+markers", name="Yield"))
+            fig.update_layout(height=350, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font={"color":T["text"]}, margin=dict(l=10,r=10,t=20,b=10))
             st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.warning("Treasury data loaded empty. Please refresh later.")
     else:
         st.warning("Treasury yields unavailable right now.")
 
-st.markdown("""<div class="footer">Educational only. Not financial advice. Best use: decide whether to buy more, normal, or smaller with taxable cash.</div>""", unsafe_allow_html=True)
+st.markdown('<div class="footer">Educational only. Not financial advice. Best use: decide whether to buy more, normally, smaller, or not chase.</div>', unsafe_allow_html=True)
