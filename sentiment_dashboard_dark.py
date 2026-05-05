@@ -538,24 +538,25 @@ div[data-testid="stButton"] button:hover {{
 }}
 
 
-.hero-updated {
+
+.hero-updated {{
     color: {t["muted"]};
     font-size: 13px;
     margin-top: 16px;
     font-weight: 700;
-}
+}}
 
-.compact-hero {
+.compact-hero {{
     padding: 28px 31px;
-}
+}}
 
-.decision-stack {
+.decision-stack {{
     margin-top: 22px;
     display: grid;
     gap: 10px;
-}
+}}
 
-.decision-row {
+.decision-row {{
     display: flex;
     justify-content: space-between;
     gap: 16px;
@@ -564,24 +565,24 @@ div[data-testid="stButton"] button:hover {{
     background: {t["surface"]};
     border-radius: 18px;
     padding: 13px 14px;
-}
+}}
 
-.decision-label {
+.decision-label {{
     color: {t["muted"]};
     font-size: 12px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: .55px;
-}
+}}
 
-.decision-value {
+.decision-value {{
     color: {t["text"]};
     font-size: 14px;
     font-weight: 900;
     text-align: right;
-}
+}}
 
-.heat-explainer {
+.heat-explainer {{
     margin-top: 22px;
     border-radius: 18px;
     padding: 14px 15px;
@@ -590,13 +591,80 @@ div[data-testid="stButton"] button:hover {{
     color: {t["muted"]};
     font-size: 14px;
     line-height: 1.45;
-}
+}}
 
-.two-tile {
+.two-tile {{
     grid-template-columns: 1fr 1fr;
-}
+}}
+
+.single-command-card {{
+    min-height: 360px;
+}}
+
+.command-grid {{
+    display: grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap: 18px;
+    align-items: stretch;
+}}
+
+.command-left {{
+    background: linear-gradient(180deg, {t["surface"]}, {t["surface2"]});
+    border: 1px solid {t["border"]};
+    border-radius: 30px;
+    box-shadow: {t["shadow"]};
+    padding: 30px;
+}}
+
+.command-right {{
+    background: linear-gradient(180deg, {t["surface"]}, {t["surface2"]});
+    border: 1px solid {t["border"]};
+    border-radius: 30px;
+    box-shadow: {t["shadow"]};
+    padding: 30px;
+}}
+
+.command-top {{
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+}}
+
+.command-score {{
+    text-align: right;
+}}
+
+.command-score-num {{
+    font-size: 58px;
+    line-height: .9;
+    font-weight: 950;
+    letter-spacing: -2px;
+    color: {t["text"]};
+}}
+
+.command-score-label {{
+    margin-top: 6px;
+    color: {t["muted"]};
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+}}
+
+.command-note {{
+    margin-top: 18px;
+    color: {t["muted"]};
+    font-size: 15px;
+    line-height: 1.5;
+}}
+
+.mini-meter-wrap {{
+    margin-top: 22px;
+}}
 
 @media (max-width: 900px) {{
+    .command-grid {{ grid-template-columns: 1fr; }}
     .hero-title {{ font-size: 34px; }}
     .action-word {{ font-size: 43px; }}
     .score-number {{ font-size: 72px; }}
@@ -1177,61 +1245,50 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-left, right = st.columns([.52, .48])
-with left:
-    st.markdown(f"""
-<div class="card action-card">
-  <div class="kicker">Today’s Move</div>
-  <div class="action-word">{act}</div>
-  <div class="main-copy">{act_copy}</div>
+st.markdown(f"""
+<div class="command-grid">
+  <div class="command-left">
+    <div class="command-top">
+      <div>
+        <div class="kicker">Today’s Move</div>
+        <div class="action-word">{act}</div>
+      </div>
+      <div class="command-score">
+        <div class="command-score-num">{score if score is not None else "N/A"}</div>
+        <div class="command-score-label">{heat} heat</div>
+      </div>
+    </div>
 
-  <div class="decision-stack">
-    <div class="decision-row">
-      <span class="decision-label">What to do now</span>
-      <span class="decision-value">{tranche}</span>
-    </div>
-    <div class="decision-row">
-      <span class="decision-label">What not to do</span>
-      <span class="decision-value">Do not dump in a large lump sum</span>
-    </div>
-    <div class="decision-row">
-      <span class="decision-label">Long-term plan</span>
-      <span class="decision-value">Keep regular DCA on</span>
-    </div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+    <div class="main-copy">{act_copy}</div>
 
-with right:
-    st.markdown(f"""
-<div class="card score-card">
-  <div class="score-top">
-    <div>
-      <div class="score-label">Market Heat</div>
-      <div class="score-number">{score if score is not None else "N/A"}</div>
-    </div>
-    <div>
-      <div class="score-status">{heat}</div>
-      <div class="score-mini">0 = fearful · 100 = hot</div>
+    <div class="decision-stack">
+      <div class="decision-row">
+        <span class="decision-label">Buy today</span>
+        <span class="decision-value">{now_percent} of planned lump sum</span>
+      </div>
+      <div class="decision-row">
+        <span class="decision-label">Rest of cash</span>
+        <span class="decision-value">{plan_action}</span>
+      </div>
+      <div class="decision-row">
+        <span class="decision-label">Avoid</span>
+        <span class="decision-value">Large emotional buy</span>
+      </div>
     </div>
   </div>
 
-  <div class="meter"></div>
-  <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
-  <div class="scale"><span>Buy More</span><span>Normal</span><span>Buy Less</span></div>
+  <div class="command-right">
+    <div class="score-label">Market Heat Meter</div>
+    <div class="score-mini" style="text-align:left;margin-top:6px;">0 = fearful / better entry · 100 = hot / buy less</div>
 
-  <div class="heat-explainer">
-    <b>Simple read:</b> the market is running hot, so the next buy should be smaller — not stopped.
-  </div>
-
-  <div class="buy-plan two-tile">
-    <div class="buy-tile">
-      <div class="buy-label">Suggested buy</div>
-      <div class="buy-value">{now_percent}</div>
+    <div class="mini-meter-wrap">
+      <div class="meter"></div>
+      <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
+      <div class="scale"><span>Buy More</span><span>Normal</span><span>Buy Less</span></div>
     </div>
-    <div class="buy-tile">
-      <div class="buy-label">Remaining cash</div>
-      <div class="buy-value">{plan_action}</div>
+
+    <div class="command-note">
+      <b>Beginner read:</b> this does not say “sell.” It says the market is hot enough that a smaller taxable buy is smarter than chasing.
     </div>
   </div>
 </div>
