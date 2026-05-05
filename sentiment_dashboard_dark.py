@@ -769,7 +769,7 @@ with z:
 st.markdown(f'<div class="section">Why the app says {act}</div>', unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["Why This Signal", "S&P Trend", "Treasury Curve"])
 with tab1:
-    st.markdown('<div class="clean-note">Plain-English explanation of the signal. The raw math is hidden below so the app feels like a product, not a spreadsheet.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="clean-note">Plain-English explanation of the signal.</div>', unsafe_allow_html=True)
 
     signal_df = build_driver_rows(vix, spx["rsi"], spx["dist"], pcr, curve, trends, news_score)
     top_drivers = signal_df.sort_values("_severity", ascending=False).head(3)
