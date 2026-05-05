@@ -33,7 +33,7 @@ st.set_page_config(
 # Theme
 # ============================================================
 if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = True
+    st.session_state.dark_mode = False
 
 LIGHT = {
     "bg": "#f6f8fb",
