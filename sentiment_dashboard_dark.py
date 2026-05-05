@@ -537,11 +537,73 @@ div[data-testid="stButton"] button:hover {{
     border-top: 1px solid {t["border"]};
 }}
 
+
+.hero-updated {
+    color: {t["muted"]};
+    font-size: 13px;
+    margin-top: 16px;
+    font-weight: 700;
+}
+
+.compact-hero {
+    padding: 28px 31px;
+}
+
+.decision-stack {
+    margin-top: 22px;
+    display: grid;
+    gap: 10px;
+}
+
+.decision-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    border: 1px solid {t["border"]};
+    background: {t["surface"]};
+    border-radius: 18px;
+    padding: 13px 14px;
+}
+
+.decision-label {
+    color: {t["muted"]};
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .55px;
+}
+
+.decision-value {
+    color: {t["text"]};
+    font-size: 14px;
+    font-weight: 900;
+    text-align: right;
+}
+
+.heat-explainer {
+    margin-top: 22px;
+    border-radius: 18px;
+    padding: 14px 15px;
+    background: {t["surface"]};
+    border: 1px solid {t["border"]};
+    color: {t["muted"]};
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.two-tile {
+    grid-template-columns: 1fr 1fr;
+}
+
 @media (max-width: 900px) {{
     .hero-title {{ font-size: 34px; }}
     .action-word {{ font-size: 43px; }}
     .score-number {{ font-size: 72px; }}
     .buy-plan {{ grid-template-columns: 1fr; }}
+    .two-tile {{ grid-template-columns: 1fr; }}
+    .decision-row {{ flex-direction: column; align-items: flex-start; }}
+    .decision-value {{ text-align: left; }}
     .signal-row {{ grid-template-columns: 1fr; gap: 6px; }}
     .signal-do {{ text-align: left; }}
 }}
@@ -1092,13 +1154,13 @@ confidence, confidence_reason = confidence_text(score, signal_df)
 marker_left = 0 if score is None else max(0, min(100, score))
 
 today_summary = {
-    "BUY MORE": "Fear is elevated. Consider buying more than normal in tranches.",
-    "BUY A LITTLE MORE": "Fear is present. Slightly increase the next buy, but do not try to call the bottom.",
-    "BUY NORMALLY": "Market setup is balanced. Keep your plan boring and consistent.",
-    "BUY SMALLER": "Market is healthy but hot. Keep buying, but reduce large taxable buys.",
-    "DON’T CHASE": "Market is stretched. Keep DCA active, but do not force a large new buy.",
-    "WAIT": "Data is incomplete. Use normal DCA until the signal refreshes.",
-}.get(act, "Use the signal to size the next buy, not to predict the market.")
+    "BUY MORE": "Fear is elevated. Bigger tranches are reasonable.",
+    "BUY A LITTLE MORE": "Fear is present. Slightly increase the next buy.",
+    "BUY NORMALLY": "Balanced setup. Stay on the normal plan.",
+    "BUY SMALLER": "Hot market. Use a smaller tranche today.",
+    "DON’T CHASE": "Stretched market. DCA only.",
+    "WAIT": "Data incomplete. Use normal DCA until refresh.",
+}.get(act, "Use the signal to size the next buy.")
 
 buffett_lens, bogle_lens, momentum_lens = lens_copy(signal_df, spx["dist"])
 
@@ -1107,14 +1169,11 @@ buffett_lens, bogle_lens, momentum_lens = lens_copy(signal_df, spx["dist"])
 # UI
 # ============================================================
 st.markdown(f"""
-<div class="hero">
+<div class="hero compact-hero">
   <div class="hero-title">📈 Should I Buy Today?</div>
-  <div class="hero-sub">
-    A simple taxable-buy sizing signal for long-term index investors. It does not predict tomorrow.
-    It tells you whether your next buy should be bigger, normal, smaller, or paused.
-  </div>
-  <div class="today-summary">Today’s read: {today_summary}</div>
-  <div class="hero-sub">Updated {datetime.now().strftime("%b %d, %Y %I:%M %p")}.</div>
+  <div class="hero-sub">One simple answer for long-term index investors: buy more, buy normally, buy smaller, or wait.</div>
+  <div class="today-summary">{today_summary}</div>
+  <div class="hero-updated">Updated {datetime.now().strftime("%b %d, %Y %I:%M %p")}</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1122,12 +1181,24 @@ left, right = st.columns([.52, .48])
 with left:
     st.markdown(f"""
 <div class="card action-card">
-  <div class="kicker">Clear Action Read</div>
+  <div class="kicker">Today’s Move</div>
   <div class="action-word">{act}</div>
-  <div class="badge {act_class}">{heat} market · {score if score is not None else "N/A"}/100 heat score</div>
   <div class="main-copy">{act_copy}</div>
-  <div class="no-sell"><b>Not a sell signal.</b> This is a buy-sizing tool. Keep your long-term plan alive; just avoid chasing oversized buys when the market is hot.</div>
-  <div class="sub-copy"><b>Plain English:</b> green means better entry setup, yellow means normal buying, red means the market is hot.</div>
+
+  <div class="decision-stack">
+    <div class="decision-row">
+      <span class="decision-label">What to do now</span>
+      <span class="decision-value">{tranche}</span>
+    </div>
+    <div class="decision-row">
+      <span class="decision-label">What not to do</span>
+      <span class="decision-value">Do not dump in a large lump sum</span>
+    </div>
+    <div class="decision-row">
+      <span class="decision-label">Long-term plan</span>
+      <span class="decision-value">Keep regular DCA on</span>
+    </div>
+  </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1136,29 +1207,30 @@ with right:
 <div class="card score-card">
   <div class="score-top">
     <div>
-      <div class="score-label">Market Heat Score</div>
+      <div class="score-label">Market Heat</div>
       <div class="score-number">{score if score is not None else "N/A"}</div>
     </div>
     <div>
       <div class="score-status">{heat}</div>
-      <div class="score-mini">Higher = hotter / more greedy</div>
+      <div class="score-mini">0 = fearful · 100 = hot</div>
     </div>
   </div>
+
   <div class="meter"></div>
   <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
-  <div class="scale"><span>Better Entry</span><span>Normal</span><span>Hot Market</span></div>
-  <div class="score-note">Green = better entry setup. Yellow = normal buying. Red = market is hot; reduce large lump-sum buys.</div>
-  <div class="buy-plan">
+  <div class="scale"><span>Buy More</span><span>Normal</span><span>Buy Less</span></div>
+
+  <div class="heat-explainer">
+    <b>Simple read:</b> the market is running hot, so the next buy should be smaller — not stopped.
+  </div>
+
+  <div class="buy-plan two-tile">
     <div class="buy-tile">
-      <div class="buy-label">Buy Plan</div>
-      <div class="buy-value">{plan_name}</div>
-    </div>
-    <div class="buy-tile">
-      <div class="buy-label">Deploy Now</div>
+      <div class="buy-label">Suggested buy</div>
       <div class="buy-value">{now_percent}</div>
     </div>
     <div class="buy-tile">
-      <div class="buy-label">Rest</div>
+      <div class="buy-label">Remaining cash</div>
       <div class="buy-value">{plan_action}</div>
     </div>
   </div>
