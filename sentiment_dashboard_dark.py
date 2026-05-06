@@ -1190,11 +1190,15 @@ def mini_class(name, value):
     if name == "RSI":
         if value is None:
             return "N/A", "badge-blue"
-        if value < 35:
+        if value < 30:
             return "Oversold", "badge-green"
-        if value <= 65:
-            return "Healthy", "badge-yellow"
-        return "Hot", "badge-red"
+        if value < 40:
+            return "Near Oversold", "badge-green"
+        if value <= 60:
+            return "Neutral", "badge-yellow"
+        if value <= 70:
+            return "Near Overbought", "badge-yellow"
+        return "Overbought", "badge-red"
     if name == "Trend":
         if value is None:
             return "N/A", "badge-blue"
@@ -1366,16 +1370,19 @@ def human_signal_row(name, reading):
             return ["VIX", fmt(reading), "Some fear is showing up.", "Slightly better buy setup"]
         return ["VIX", fmt(reading), "Fear is elevated. Better prices may be appearing.", "Better buy setup"]
 
-    if name == "RSI":
+    if name in ["RSI", "S&P 500 RSI"]:
+        signal_name = "S&P 500 RSI"
         if reading is None:
-            return ["RSI", "Missing", "Momentum unavailable", "Ignore for now"]
-        if reading < 35:
-            return ["RSI", fmt(reading), "Market looks oversold.", "Better buy setup"]
-        if reading <= 65:
-            return ["RSI", fmt(reading), "Momentum looks normal.", "Neutral"]
-        if reading <= 72:
-            return ["RSI", fmt(reading), "Momentum is hot.", "Buy smaller"]
-        return ["RSI", fmt(reading), "Momentum is very hot.", "Do not chase"]
+            return [signal_name, "Missing", "RSI unavailable.", "Ignore for now"]
+        if reading < 30:
+            return [signal_name, fmt(reading), "Oversold. The S&P 500 may be stretched to the downside.", "Better buy setup"]
+        if reading < 40:
+            return [signal_name, fmt(reading), "Near oversold. Buying conditions are improving.", "Slightly better buy setup"]
+        if reading <= 60:
+            return [signal_name, fmt(reading), "Neutral. The S&P 500 is not stretched.", "Neutral"]
+        if reading <= 70:
+            return [signal_name, fmt(reading), "Near overbought. Use some caution.", "Buy smaller"]
+        return [signal_name, fmt(reading), "Overbought. The S&P 500 is stretched short term.", "Do not chase"]
 
     if name == "S&P vs 200D":
         if reading is None:
@@ -1438,7 +1445,7 @@ def driver_severity(action_text):
 def build_driver_rows(vix, rsi, dist, pcr, curve, trends, news):
     rows = [
         human_signal_row("VIX", vix),
-        human_signal_row("RSI", rsi),
+        human_signal_row("S&P 500 RSI", rsi),
         human_signal_row("S&P vs 200D", dist),
         human_signal_row("Put/Call", pcr),
         human_signal_row("10Y-2Y", curve),
@@ -1462,11 +1469,11 @@ def build_score(vix, rsi, dist, pcr, curve, trends, news):
             "Meaning": "Volatility/fear. High VIX usually improves entry points.",
         },
         {
-            "Indicator": "RSI",
+            "Indicator": "S&P 500 RSI",
             "Reading": fmt(rsi),
             "Score": score_from_range(rsi, [(25, 10), (35, 25), (50, 50), (65, 72), (75, 90), (85, 100)]),
             "Weight": .21,
-            "Meaning": "Momentum temperature. High RSI means hot.",
+            "Meaning": "S&P 500 overbought/oversold reading. High RSI = overbought; low RSI = oversold.",
         },
         {
             "Indicator": "S&P vs 200D",
@@ -1531,15 +1538,15 @@ def confidence_text(score, signal_df):
 
 
 def lens_copy(signal_df, dist):
-    rsi_row = signal_df[signal_df["Signal"] == "RSI"]
+    rsi_row = signal_df[signal_df["Signal"] == "S&P 500 RSI"]
     pcr_row = signal_df[signal_df["Signal"] == "Put/Call"]
 
     buffett = "Patience beats chasing. Current conditions do not look like a fat pitch for a huge lump sum."
     bogle = "Keep scheduled broad-index buying active. The app sizes the buy; it should not turn you into a trader."
     momentum = "Trend remains constructive if the S&P is near or above its 200-day average, but hot momentum deserves discipline."
 
-    if not rsi_row.empty and "hot" in rsi_row.iloc[0]["What it says"].lower():
-        buffett = "RSI is hot, so this is not a fat pitch. Be patient with large taxable buys."
+    if not rsi_row.empty and "overbought" in rsi_row.iloc[0]["What it says"].lower():
+        buffett = "S&P 500 RSI is overbought, so this is not a fat pitch. Be patient with large taxable buys."
     if not pcr_row.empty and "greedy" in pcr_row.iloc[0]["What it says"].lower():
         buffett = "Options sentiment looks greedy. Good investors do not chase crowded enthusiasm."
 
@@ -1722,7 +1729,7 @@ pcr_b, pcr_c = mini_class("PutCall", pcr)
 with a:
     metric_card("VIX", fmt(vix), vix_b, vix_c, "Fear gauge. Higher usually means better entry opportunities.")
 with b:
-    metric_card("RSI", fmt(spx["rsi"]), rsi_b, rsi_c, "Momentum temperature. High = hot; low = washed out.")
+    metric_card("S&P 500 RSI", fmt(spx["rsi"]), rsi_b, rsi_c, "Overbought / oversold read for the S&P 500.")
 with c:
     metric_card("S&P vs 200D", fmt(spx["dist"], "%"), trend_b, trend_c, "How far the market sits from its long-term trend.")
 with d:
