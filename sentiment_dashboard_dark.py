@@ -1046,6 +1046,191 @@ div[data-testid="stButton"] button:hover {{
     }}
 }}
 
+
+/* ============================================================
+   Premium animation pack: clear, simple, impressive
+   ============================================================ */
+
+@keyframes livePulse {{
+    0% {{
+        transform: scale(.95);
+        box-shadow: 0 0 0 0 rgba(34,197,94,.55);
+        opacity: .8;
+    }}
+    70% {{
+        transform: scale(1.12);
+        box-shadow: 0 0 0 9px rgba(34,197,94,0);
+        opacity: 1;
+    }}
+    100% {{
+        transform: scale(.95);
+        box-shadow: 0 0 0 0 rgba(34,197,94,0);
+        opacity: .85;
+    }}
+}}
+
+@keyframes scoreRollIn {{
+    0% {{
+        opacity: 0;
+        transform: translateY(18px) scale(.72) rotateX(34deg);
+        filter: blur(7px);
+    }}
+    55% {{
+        opacity: 1;
+        transform: translateY(-5px) scale(1.08) rotateX(0deg);
+        filter: blur(0);
+    }}
+    100% {{
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }}
+}}
+
+@keyframes markerGlide {{
+    0% {{
+        left: calc(0% - 10px);
+        transform: scale(.86);
+    }}
+    65% {{
+        left: calc(var(--target-left) - 10px);
+        transform: scale(1.14);
+    }}
+    100% {{
+        left: calc(var(--target-left) - 10px);
+        transform: scale(1);
+    }}
+}}
+
+@keyframes heatZoneGlow {{
+    0%, 100% {{
+        opacity: .18;
+        transform: scaleX(.96);
+        filter: blur(10px);
+    }}
+    50% {{
+        opacity: .42;
+        transform: scaleX(1.02);
+        filter: blur(16px);
+    }}
+}}
+
+@keyframes signalStagger {{
+    from {{
+        opacity: 0;
+        transform: translateY(18px) scale(.985);
+        filter: blur(5px);
+    }}
+    to {{
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }}
+}}
+
+@keyframes verdictSweep {{
+    0% {{ transform: translateX(-130%); opacity: 0; }}
+    18% {{ opacity: .75; }}
+    55% {{ opacity: .55; }}
+    100% {{ transform: translateX(250%); opacity: 0; }}
+}}
+
+.live-dot {{
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: {t["green"]};
+    display: inline-block;
+    margin-right: 2px;
+    animation: livePulse 1.65s ease-out infinite;
+}}
+
+.score-count {{
+    animation:
+      scoreRollIn .9s cubic-bezier(.18,.9,.22,1) both,
+      subtleDrift 4.2s ease-in-out infinite 1s;
+    transform-origin: center;
+}}
+
+.hero-meter-card .marker {{
+    animation:
+      markerGlide 1.15s cubic-bezier(.16,.9,.2,1) both,
+      markerPulseHeavy 1.9s ease-out infinite 1.2s;
+}}
+
+.hero-meter-card .meter {{
+    isolation: isolate;
+}}
+
+.hero-meter-card .meter::before {{
+    z-index: 2;
+}}
+
+.hero-meter-card .meter::after {{
+    z-index: 1;
+}}
+
+.hero-meter-card::before {{
+    content: "";
+    position: absolute;
+    right: 22px;
+    top: 112px;
+    width: 43%;
+    height: 96px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(251,113,133,.42), rgba(251,113,133,.02) 67%, transparent 72%);
+    pointer-events: none;
+    animation: heatZoneGlow 2.8s ease-in-out infinite;
+}}
+
+.meter-verdict {{
+    position: relative;
+    overflow: hidden;
+}}
+
+.meter-verdict::after {{
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 34%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+    animation: verdictSweep 3.1s ease-in-out infinite;
+}}
+
+.driver-card, .metric-card, .lens-card, .signal-row {{
+    opacity: 0;
+    animation: signalStagger .64s cubic-bezier(.2,.9,.2,1) both;
+}}
+
+.driver-card:nth-of-type(1), .metric-card:nth-of-type(1), .lens-card:nth-of-type(1), .signal-row:nth-of-type(1) {{
+    animation-delay: .08s;
+}}
+.driver-card:nth-of-type(2), .metric-card:nth-of-type(2), .lens-card:nth-of-type(2), .signal-row:nth-of-type(2) {{
+    animation-delay: .16s;
+}}
+.driver-card:nth-of-type(3), .metric-card:nth-of-type(3), .lens-card:nth-of-type(3), .signal-row:nth-of-type(3) {{
+    animation-delay: .24s;
+}}
+.driver-card:nth-of-type(4), .metric-card:nth-of-type(4), .lens-card:nth-of-type(4), .signal-row:nth-of-type(4) {{
+    animation-delay: .32s;
+}}
+
+@media (prefers-reduced-motion: reduce) {{
+    .live-dot,
+    .score-count,
+    .hero-meter-card .marker,
+    .hero-meter-card::before,
+    .meter-verdict::after,
+    .driver-card,
+    .metric-card,
+    .lens-card,
+    .signal-row {{
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+    }}
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1618,7 +1803,7 @@ st.markdown(f"""
 <div class="hero">
   <div class="hero-title">📈 Should I Buy Today?</div>
   <div class="hero-sub"><b>{act}</b> · Buy <b>{now_percent}</b> now · DCA the rest</div>
-  <div class="today-summary">Live · {heat}</div>
+  <div class="today-summary"><span class="live-dot"></span>Live · {heat}</div>
   <div class="hero-updated">Updated {datetime.now().strftime("%b %d, %Y %I:%M %p")}</div>
 </div>
 """, unsafe_allow_html=True)
@@ -1635,13 +1820,13 @@ with top_left:
       <div class="score-label">Market Heat Meter</div>
       <div class="meter-title">{heat}</div>
     </div>
-    <div class="big-heat-score">{score if score is not None else "N/A"}</div>
+    <div class="big-heat-score score-count">{score if score is not None else "N/A"}</div>
   </div>
 
   <div class="meter-subtitle">Hot market. Smaller buy. Stay invested.</div>
 
   <div class="meter"></div>
-  <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
+  <div class="marker" style="--target-left:{marker_left}%; left: calc({marker_left}% - 10px);"></div>
   <div class="scale"><span>Buy More</span><span>Normal</span><span>Buy Less</span></div>
 
   <div class="meter-verdict">
