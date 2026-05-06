@@ -1523,41 +1523,42 @@ div[data-testid="stButton"] button:hover {{
 }}
 
 
+
 /* ============================================================
    Stability fix: always show real score, never CSS-counter 0
    ============================================================ */
-.score-pop-real {
+.score-pop-real {{
     color: {t["text"]} !important;
     animation:
       scoreRollIn .9s cubic-bezier(.18,.9,.22,1) both,
       subtleDrift 4.2s ease-in-out infinite 1s;
-}
+}}
 
-.score-count {
+.score-count {{
     color: {t["text"]} !important;
     animation:
       scoreRollIn .9s cubic-bezier(.18,.9,.22,1) both,
       subtleDrift 4.2s ease-in-out infinite 1s !important;
-}
+}}
 
-.score-count::after {
+.score-count::after {{
     display: none !important;
     content: none !important;
-}
+}}
 
-.signal-dots {
+.signal-dots {{
     grid-template-columns: repeat(5, minmax(0, 1fr));
-}
+}}
 
-.signal-dot-card {
+.signal-dot-card {{
     justify-content: center;
     padding: 10px 7px;
-}
+}}
 
-.signal-dot-label {
+.signal-dot-label {{
     font-size: 11px;
     max-width: none;
-}
+}}
 
 </style>
 """, unsafe_allow_html=True)
@@ -2395,6 +2396,3 @@ This app is designed for long-term index investors sizing taxable buys, not trad
 </div>
 """, unsafe_allow_html=True)
 
-
-# NOTE: The CSS counter-based score animation was intentionally disabled.
-# It looked cool in theory, but some Streamlit/browser rendering paths displayed 0.
