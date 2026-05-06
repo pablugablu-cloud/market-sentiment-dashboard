@@ -860,6 +860,192 @@ div[data-testid="stButton"] button:hover {{
     margin-top: 12px;
 }}
 
+
+/* ============================================================
+   Ultra-modern motion layer
+   ============================================================ */
+
+@keyframes auroraMove {{
+    0% {{ transform: translate3d(-4%, -3%, 0) scale(1); opacity: .58; }}
+    35% {{ transform: translate3d(5%, 2%, 0) scale(1.08); opacity: .85; }}
+    70% {{ transform: translate3d(2%, 6%, 0) scale(.98); opacity: .7; }}
+    100% {{ transform: translate3d(-4%, -3%, 0) scale(1); opacity: .58; }}
+}}
+
+@keyframes heroGlow {{
+    0%, 100% {{ box-shadow: 0 24px 70px rgba(15,23,42,.08), inset 0 0 0 rgba(96,165,250,0); }}
+    50% {{ box-shadow: 0 32px 90px rgba(37,99,235,.20), inset 0 0 48px rgba(96,165,250,.08); }}
+}}
+
+@keyframes cardRise {{
+    0% {{ opacity: 0; transform: translateY(22px) scale(.985); filter: blur(5px); }}
+    100% {{ opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }}
+}}
+
+@keyframes scorePop {{
+    0% {{ opacity: 0; transform: translateY(14px) scale(.82); filter: blur(3px); }}
+    60% {{ opacity: 1; transform: translateY(-4px) scale(1.04); filter: blur(0); }}
+    100% {{ transform: translateY(0) scale(1); }}
+}}
+
+@keyframes meterSweep {{
+    0% {{ transform: translateX(-130%); opacity: 0; }}
+    12% {{ opacity: .95; }}
+    60% {{ opacity: .9; }}
+    100% {{ transform: translateX(260%); opacity: 0; }}
+}}
+
+@keyframes markerPulseHeavy {{
+    0% {{
+        transform: scale(1);
+        box-shadow:
+          0 0 0 0 rgba(255,255,255,.34),
+          0 0 0 0 rgba(251,113,133,.26),
+          0 12px 30px rgba(0,0,0,.35);
+    }}
+    45% {{
+        transform: scale(1.08);
+        box-shadow:
+          0 0 0 10px rgba(255,255,255,0),
+          0 0 0 20px rgba(251,113,133,.08),
+          0 18px 42px rgba(0,0,0,.42);
+    }}
+    100% {{
+        transform: scale(1);
+        box-shadow:
+          0 0 0 0 rgba(255,255,255,0),
+          0 0 0 0 rgba(251,113,133,0),
+          0 12px 30px rgba(0,0,0,.35);
+    }}
+}}
+
+@keyframes verdictGlow {{
+    0%, 100% {{ transform: scale(1); box-shadow: 0 0 0 rgba(251,113,133,0); }}
+    50% {{ transform: scale(1.012); box-shadow: 0 0 36px rgba(251,113,133,.22); }}
+}}
+
+@keyframes pillPulse {{
+    0%, 100% {{ transform: scale(1); }}
+    50% {{ transform: scale(1.025); }}
+}}
+
+@keyframes subtleDrift {{
+    0%, 100% {{ transform: translateY(0); }}
+    50% {{ transform: translateY(-5px); }}
+}}
+
+.stApp::before {{
+    content: "";
+    position: fixed;
+    inset: -20%;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(96,165,250,.18), transparent 28%),
+      radial-gradient(circle at 80% 10%, rgba(34,197,94,.13), transparent 26%),
+      radial-gradient(circle at 60% 90%, rgba(251,113,133,.13), transparent 30%);
+    filter: blur(24px);
+    animation: auroraMove 13s ease-in-out infinite;
+}}
+
+.block-container {{
+    position: relative;
+    z-index: 1;
+}}
+
+.hero {{
+    animation: cardRise .7s cubic-bezier(.2,.9,.2,1) both, heroGlow 5.5s ease-in-out infinite;
+}}
+
+.hero::after {{
+    animation: auroraMove 9s ease-in-out infinite;
+}}
+
+.today-summary {{
+    animation: pillPulse 2.6s ease-in-out infinite;
+}}
+
+.card, .buy-tile, .driver-card, .metric-card, .lens-card {{
+    animation: cardRise .72s cubic-bezier(.2,.9,.2,1) both;
+    will-change: transform;
+}}
+
+.card:nth-of-type(1) {{ animation-delay: .08s; }}
+.card:nth-of-type(2) {{ animation-delay: .16s; }}
+
+.hero-meter-card {{
+    position: relative;
+    animation-delay: .10s;
+}}
+
+.compact-action-card {{
+    animation-delay: .18s;
+}}
+
+.big-heat-score {{
+    animation: scorePop .85s cubic-bezier(.2,.9,.2,1) both, subtleDrift 4.2s ease-in-out infinite .9s;
+}}
+
+.meter-title {{
+    animation: scorePop .8s cubic-bezier(.2,.9,.2,1) both;
+}}
+
+.hero-meter-card .meter {{
+    position: relative;
+    box-shadow: 0 0 28px rgba(251,113,133,.16);
+}}
+
+.hero-meter-card .meter::before {{
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 36%;
+    background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.36), rgba(255,255,255,0));
+    animation: meterSweep 2.2s ease-in-out infinite;
+}}
+
+.hero-meter-card .meter::after {{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+    animation: meterSweep 4.8s linear infinite reverse;
+}}
+
+.hero-meter-card .marker {{
+    animation: markerPulseHeavy 1.9s ease-out infinite;
+    z-index: 2;
+}}
+
+.meter-verdict {{
+    animation: verdictGlow 2.5s ease-in-out infinite;
+}}
+
+.meter-verdict-value {{
+    text-shadow: 0 0 22px rgba(251,113,133,.32);
+}}
+
+.buy-tile {{
+    animation-delay: .24s;
+}}
+
+.buy-tile:hover, .card:hover, .driver-card:hover, .metric-card:hover, .lens-card:hover {{
+    transform: translateY(-7px) scale(1.012);
+    box-shadow: 0 26px 70px rgba(0,0,0,.24);
+}}
+
+.action-word {{
+    animation: scorePop .7s cubic-bezier(.2,.9,.2,1) both;
+}}
+
+@media (prefers-reduced-motion: reduce) {{
+    *, *::before, *::after {{
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+    }}
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1424,8 +1610,8 @@ buffett_lens, bogle_lens, momentum_lens = lens_copy(signal_df, spx["dist"])
 st.markdown(f"""
 <div class="hero">
   <div class="hero-title">📈 Should I Buy Today?</div>
-  <div class="hero-sub">Today: <b>{act}</b> · Buy <b>{now_percent}</b> now · DCA the rest.</div>
-  <div class="today-summary">Live signal · {heat} market</div>
+  <div class="hero-sub"><b>{act}</b> · Buy <b>{now_percent}</b> now · DCA the rest</div>
+  <div class="today-summary">Live · {heat}</div>
   <div class="hero-updated">Updated {datetime.now().strftime("%b %d, %Y %I:%M %p")}</div>
 </div>
 """, unsafe_allow_html=True)
@@ -1445,7 +1631,7 @@ with top_left:
     <div class="big-heat-score">{score if score is not None else "N/A"}</div>
   </div>
 
-  <div class="meter-subtitle">Hot = buy smaller, not sell.</div>
+  <div class="meter-subtitle">Hot market. Smaller buy. Stay invested.</div>
 
   <div class="meter"></div>
   <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
@@ -1463,7 +1649,7 @@ with top_right:
 <div class="card action-card compact-action-card">
   <div class="kicker">What to do</div>
   <div class="action-word compact-action">{act}</div>
-  <div class="main-copy compact-copy">Size down today. Stay invested.</div>
+  <div class="main-copy compact-copy">Smaller buy. No panic.</div>
 </div>
 """, unsafe_allow_html=True)
 
