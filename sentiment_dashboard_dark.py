@@ -1215,52 +1215,63 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown(f"""
-<div class="command-grid">
-  <div class="command-left">
-    <div class="command-header">
-      <div>
-        <div class="kicker">Today’s Move</div>
-        <div class="action-word">{act}</div>
-      </div>
-      <div class="command-score">
-        <div class="command-score-num">{score if score is not None else "N/A"}</div>
-        <div class="command-score-label">{heat} heat</div>
-      </div>
+
+top_left, top_right = st.columns([0.63, 0.37], gap="large")
+
+with top_left:
+    st.markdown(f"""
+<div class="card action-card">
+  <div class="command-header">
+    <div>
+      <div class="kicker">Today’s Move</div>
+      <div class="action-word">{act}</div>
     </div>
-
-    <div class="main-copy">{act_copy}</div>
-
-    <div class="decision-stack">
-      <div class="decision-row">
-        <span class="decision-label">Buy today</span>
-        <span class="decision-value">{now_percent} of planned lump sum</span>
-      </div>
-      <div class="decision-row">
-        <span class="decision-label">Rest of cash</span>
-        <span class="decision-value">{plan_action}</span>
-      </div>
-      <div class="decision-row">
-        <span class="decision-label">Avoid</span>
-        <span class="decision-value">Large emotional buy</span>
-      </div>
+    <div class="command-score">
+      <div class="command-score-num">{score if score is not None else "N/A"}</div>
+      <div class="command-score-label">{heat} heat</div>
     </div>
   </div>
+  <div class="main-copy">{act_copy}</div>
+</div>
+""", unsafe_allow_html=True)
 
-  <div class="command-right">
-    <div class="score-label">Market Heat Meter</div>
-    <div class="score-mini left-score-mini">0 = fearful / better entry · 100 = hot / buy less</div>
+    a1, a2, a3 = st.columns(3)
+    with a1:
+        st.markdown(f"""
+<div class="buy-tile">
+  <div class="buy-label">Buy today</div>
+  <div class="buy-value">{now_percent}</div>
+</div>
+""", unsafe_allow_html=True)
+    with a2:
+        st.markdown(f"""
+<div class="buy-tile">
+  <div class="buy-label">Rest of cash</div>
+  <div class="buy-value">{plan_action}</div>
+</div>
+""", unsafe_allow_html=True)
+    with a3:
+        st.markdown("""
+<div class="buy-tile">
+  <div class="buy-label">Avoid</div>
+  <div class="buy-value">Big lump sum</div>
+</div>
+""", unsafe_allow_html=True)
 
-    <div class="meter"></div>
-    <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
-    <div class="scale"><span>Buy More</span><span>Normal</span><span>Buy Less</span></div>
-
-    <div class="heat-explainer">
-      <b>Beginner read:</b> this does not say “sell.” It says the market is hot enough that a smaller taxable buy is smarter than chasing.
-    </div>
+with top_right:
+    st.markdown(f"""
+<div class="card score-card">
+  <div class="score-label">Market Heat Meter</div>
+  <div class="score-mini left-score-mini">0 = fearful / better entry · 100 = hot / buy less</div>
+  <div class="meter"></div>
+  <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
+  <div class="scale"><span>Buy More</span><span>Normal</span><span>Buy Less</span></div>
+  <div class="heat-explainer">
+    <b>Beginner read:</b> this does not say “sell.” It says the market is hot enough that a smaller taxable buy is smarter than chasing.
   </div>
 </div>
 """, unsafe_allow_html=True)
+
 
 st.markdown(f'<div class="section">Why the app says {act}</div>', unsafe_allow_html=True)
 st.markdown('<div class="section-sub">The top drivers behind today’s recommendation, written for normal humans.</div>', unsafe_allow_html=True)
