@@ -537,17 +537,49 @@ div[data-testid="stButton"] button:hover {{
     border-top: 1px solid {t["border"]};
 }}
 
-
-
-.hero-updated {{
-    color: {t["muted"]};
-    font-size: 13px;
-    margin-top: 16px;
-    font-weight: 700;
+.command-grid {{
+    display: grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap: 18px;
+    align-items: stretch;
+    margin-bottom: 8px;
 }}
 
-.compact-hero {{
-    padding: 28px 31px;
+.command-left, .command-right {{
+    background: linear-gradient(180deg, {t["surface"]} 0%, {t["surface2"]} 100%);
+    border: 1px solid {t["border"]};
+    border-radius: 30px;
+    box-shadow: {t["shadow"]};
+    padding: 30px;
+}}
+
+.command-header {{
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+}}
+
+.command-score {{
+    text-align: right;
+    min-width: 110px;
+}}
+
+.command-score-num {{
+    font-size: 64px;
+    line-height: .88;
+    font-weight: 950;
+    letter-spacing: -2.5px;
+    color: {t["text"]};
+}}
+
+.command-score-label {{
+    margin-top: 7px;
+    color: {t["muted"]};
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .6px;
 }}
 
 .decision-stack {{
@@ -582,8 +614,14 @@ div[data-testid="stButton"] button:hover {{
     text-align: right;
 }}
 
+.left-score-mini {{
+    text-align: left !important;
+    margin-top: 7px;
+    margin-bottom: 28px;
+}}
+
 .heat-explainer {{
-    margin-top: 22px;
+    margin-top: 24px;
     border-radius: 18px;
     padding: 14px 15px;
     background: {t["surface"]};
@@ -593,85 +631,17 @@ div[data-testid="stButton"] button:hover {{
     line-height: 1.45;
 }}
 
-.two-tile {{
-    grid-template-columns: 1fr 1fr;
-}}
-
-.single-command-card {{
-    min-height: 360px;
-}}
-
-.command-grid {{
-    display: grid;
-    grid-template-columns: 1.15fr .85fr;
-    gap: 18px;
-    align-items: stretch;
-}}
-
-.command-left {{
-    background: linear-gradient(180deg, {t["surface"]}, {t["surface2"]});
-    border: 1px solid {t["border"]};
-    border-radius: 30px;
-    box-shadow: {t["shadow"]};
-    padding: 30px;
-}}
-
-.command-right {{
-    background: linear-gradient(180deg, {t["surface"]}, {t["surface2"]});
-    border: 1px solid {t["border"]};
-    border-radius: 30px;
-    box-shadow: {t["shadow"]};
-    padding: 30px;
-}}
-
-.command-top {{
-    display: flex;
-    justify-content: space-between;
-    gap: 18px;
-    align-items: flex-start;
-}}
-
-.command-score {{
-    text-align: right;
-}}
-
-.command-score-num {{
-    font-size: 58px;
-    line-height: .9;
-    font-weight: 950;
-    letter-spacing: -2px;
-    color: {t["text"]};
-}}
-
-.command-score-label {{
-    margin-top: 6px;
-    color: {t["muted"]};
-    font-size: 12px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: .6px;
-}}
-
-.command-note {{
-    margin-top: 18px;
-    color: {t["muted"]};
-    font-size: 15px;
-    line-height: 1.5;
-}}
-
-.mini-meter-wrap {{
-    margin-top: 22px;
-}}
 
 @media (max-width: 900px) {{
     .command-grid {{ grid-template-columns: 1fr; }}
+    .command-header {{ flex-direction: column; }}
+    .command-score {{ text-align: left; }}
+    .decision-row {{ flex-direction: column; align-items: flex-start; }}
+    .decision-value {{ text-align: left; }}
     .hero-title {{ font-size: 34px; }}
     .action-word {{ font-size: 43px; }}
     .score-number {{ font-size: 72px; }}
     .buy-plan {{ grid-template-columns: 1fr; }}
-    .two-tile {{ grid-template-columns: 1fr; }}
-    .decision-row {{ flex-direction: column; align-items: flex-start; }}
-    .decision-value {{ text-align: left; }}
     .signal-row {{ grid-template-columns: 1fr; gap: 6px; }}
     .signal-do {{ text-align: left; }}
 }}
@@ -1237,18 +1207,18 @@ buffett_lens, bogle_lens, momentum_lens = lens_copy(signal_df, spx["dist"])
 # UI
 # ============================================================
 st.markdown(f"""
-<div class="hero compact-hero">
+<div class="hero">
   <div class="hero-title">📈 Should I Buy Today?</div>
   <div class="hero-sub">One simple answer for long-term index investors: buy more, buy normally, buy smaller, or wait.</div>
   <div class="today-summary">{today_summary}</div>
-  <div class="hero-updated">Updated {datetime.now().strftime("%b %d, %Y %I:%M %p")}</div>
+  <div class="hero-sub">Updated {datetime.now().strftime("%b %d, %Y %I:%M %p")}.</div>
 </div>
 """, unsafe_allow_html=True)
 
 st.markdown(f"""
 <div class="command-grid">
   <div class="command-left">
-    <div class="command-top">
+    <div class="command-header">
       <div>
         <div class="kicker">Today’s Move</div>
         <div class="action-word">{act}</div>
@@ -1279,21 +1249,18 @@ st.markdown(f"""
 
   <div class="command-right">
     <div class="score-label">Market Heat Meter</div>
-    <div class="score-mini" style="text-align:left;margin-top:6px;">0 = fearful / better entry · 100 = hot / buy less</div>
+    <div class="score-mini left-score-mini">0 = fearful / better entry · 100 = hot / buy less</div>
 
-    <div class="mini-meter-wrap">
-      <div class="meter"></div>
-      <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
-      <div class="scale"><span>Buy More</span><span>Normal</span><span>Buy Less</span></div>
-    </div>
+    <div class="meter"></div>
+    <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
+    <div class="scale"><span>Buy More</span><span>Normal</span><span>Buy Less</span></div>
 
-    <div class="command-note">
+    <div class="heat-explainer">
       <b>Beginner read:</b> this does not say “sell.” It says the market is hot enough that a smaller taxable buy is smarter than chasing.
     </div>
   </div>
 </div>
 """, unsafe_allow_html=True)
-
 
 st.markdown(f'<div class="section">Why the app says {act}</div>', unsafe_allow_html=True)
 st.markdown('<div class="section-sub">The top drivers behind today’s recommendation, written for normal humans.</div>', unsafe_allow_html=True)
