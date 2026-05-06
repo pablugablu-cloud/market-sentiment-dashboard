@@ -1522,6 +1522,43 @@ div[data-testid="stButton"] button:hover {{
     }}
 }}
 
+
+/* ============================================================
+   Stability fix: always show real score, never CSS-counter 0
+   ============================================================ */
+.score-pop-real {
+    color: {t["text"]} !important;
+    animation:
+      scoreRollIn .9s cubic-bezier(.18,.9,.22,1) both,
+      subtleDrift 4.2s ease-in-out infinite 1s;
+}
+
+.score-count {
+    color: {t["text"]} !important;
+    animation:
+      scoreRollIn .9s cubic-bezier(.18,.9,.22,1) both,
+      subtleDrift 4.2s ease-in-out infinite 1s !important;
+}
+
+.score-count::after {
+    display: none !important;
+    content: none !important;
+}
+
+.signal-dots {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.signal-dot-card {
+    justify-content: center;
+    padding: 10px 7px;
+}
+
+.signal-dot-label {
+    font-size: 11px;
+    max-width: none;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -2026,18 +2063,22 @@ def dot_color_for_signal(signal, what_to_do):
 
 
 def build_signal_dots(signal_df):
-    preferred = ["S&P 500 RSI", "Put/Call", "S&P vs 200D", "VIX", "News"]
+    preferred = [
+        ("S&P 500 RSI", "RSI"),
+        ("Put/Call", "P/C"),
+        ("S&P vs 200D", "Trend"),
+        ("VIX", "VIX"),
+        ("News", "News"),
+    ]
     items = []
-    for signal in preferred:
+    for signal, label in preferred:
         rows = signal_df[signal_df["Signal"] == signal]
         if rows.empty:
             continue
         row = rows.iloc[0]
-        label = signal.replace("S&P 500 ", "")
         color = dot_color_for_signal(row["Signal"], row["What to do"])
         items.append((label, color))
     return items
-
 
 def lens_copy(signal_df, dist):
     rsi_row = signal_df[signal_df["Signal"] == "S&P 500 RSI"]
@@ -2157,7 +2198,7 @@ with top_left:
       <div class="score-label">Market Heat Meter</div>
       <div class="meter-title">{heat}</div>
     </div>
-    <div class="big-heat-score score-count" style="--scoreTarget:{score if score is not None else 0};">{score if score is not None else "N/A"}</div>
+    <div class="big-heat-score score-pop-real">{score if score is not None else "N/A"}</div>
   </div>
 
   <div class="meter-subtitle">Hot market. Smaller buy. Stay invested.</div>
@@ -2174,7 +2215,7 @@ with top_left:
     <span class="meter-verdict-label"><span class="lock-check">✓</span>Today’s call</span>
     <span class="meter-verdict-value">{act}</span>
   </div>
-  <div class="no-panic-chip"><b>No panic.</b> No sell. Just size the next buy.</div>
+  <div class="no-panic-chip"><b>No panic.</b> Not a sell signal.</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -2353,3 +2394,7 @@ Educational only. Not financial advice. Best use: decide whether to buy more, no
 This app is designed for long-term index investors sizing taxable buys, not traders trying to predict tomorrow.
 </div>
 """, unsafe_allow_html=True)
+
+
+# NOTE: The CSS counter-based score animation was intentionally disabled.
+# It looked cool in theory, but some Streamlit/browser rendering paths displayed 0.
