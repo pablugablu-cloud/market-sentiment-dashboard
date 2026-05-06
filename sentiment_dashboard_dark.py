@@ -632,6 +632,122 @@ div[data-testid="stButton"] button:hover {{
 }}
 
 
+
+.hero-updated {{
+    color: {t["muted"]};
+    font-size: 13px;
+    margin-top: 16px;
+    font-weight: 700;
+}}
+
+@keyframes floatUp {{
+    from {{ opacity: 0; transform: translateY(12px); }}
+    to {{ opacity: 1; transform: translateY(0); }}
+}}
+
+@keyframes pulseMarker {{
+    0% {{ box-shadow: 0 0 0 0 rgba(255,255,255,.22), 0 10px 26px rgba(0,0,0,.28); }}
+    70% {{ box-shadow: 0 0 0 10px rgba(255,255,255,0), 0 10px 26px rgba(0,0,0,.28); }}
+    100% {{ box-shadow: 0 0 0 0 rgba(255,255,255,0), 0 10px 26px rgba(0,0,0,.28); }}
+}}
+
+@keyframes shine {{
+    0% {{ transform: translateX(-120%); }}
+    100% {{ transform: translateX(220%); }}
+}}
+
+.hero, .card, .buy-tile {{
+    animation: floatUp .55s ease both;
+}}
+
+.hero {{
+    animation-delay: .05s;
+}}
+
+.card {{
+    transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+}}
+
+.card:hover, .buy-tile:hover {{
+    transform: translateY(-3px);
+    border-color: {t["border2"]};
+}}
+
+.hero-meter-card {{
+    overflow: hidden;
+}}
+
+.hero-meter-card .meter {{
+    position: relative;
+}}
+
+.hero-meter-card .meter::after {{
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 34%;
+    background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.18), rgba(255,255,255,0));
+    animation: shine 3.8s linear infinite;
+}}
+
+.hero-meter-card .marker {{
+    animation: pulseMarker 2.4s ease-out infinite;
+}}
+
+.hero-sub {{
+    font-size: 17px;
+    line-height: 1.45;
+    max-width: 900px;
+}}
+
+.today-summary {{
+    padding: 8px 12px;
+    font-size: 13px;
+}}
+
+.compact-action-card {{
+    min-height: 210px;
+}}
+
+.compact-action {{
+    font-size: 48px;
+    margin-top: 10px;
+}}
+
+.compact-copy {{
+    font-size: 22px;
+    line-height: 1.3;
+    max-width: 320px;
+}}
+
+.meter-subtitle {{
+    font-size: 18px;
+    line-height: 1.35;
+    margin-top: 12px;
+    margin-bottom: 28px;
+}}
+
+.meter-verdict {{
+    margin-top: 26px;
+}}
+
+.meter-verdict-value {{
+    font-size: 24px;
+}}
+
+.buy-tile {{
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}}
+
+.buy-value {{
+    font-size: 22px;
+}}
+
+.avoid-tile .buy-value {{
+    font-size: 18px;
+}}
+
+
 @media (max-width: 900px) {{
     .big-heat-score {{ font-size: 78px; }}
     .meter-title {{ font-size: 36px; }}
@@ -814,7 +930,7 @@ def action(score):
     if score is None:
         return (
             "WAIT",
-            "Data is incomplete. Use your normal buying plan until the signal refreshes cleanly.",
+            "Signal unavailable. Stay on your normal DCA.",
             "badge-blue",
             "Normal DCA only",
             "Medium",
@@ -822,7 +938,7 @@ def action(score):
     if score <= 20:
         return (
             "BUY MORE",
-            "Fear is elevated. This is usually a better setup to deploy a larger taxable tranche.",
+            "Fear is high. This is a better setup for a bigger buy.",
             "badge-green",
             "150%–200% of normal tranche",
             "Medium-High",
@@ -830,7 +946,7 @@ def action(score):
     if score <= 33:
         return (
             "BUY A LITTLE MORE",
-            "Market sentiment is fearful. Slightly increase your scheduled buy without trying to call the bottom.",
+            "Fear is up. Slightly increase the next buy.",
             "badge-green",
             "125%–150% of normal tranche",
             "Medium",
@@ -838,7 +954,7 @@ def action(score):
     if score <= 66:
         return (
             "BUY NORMALLY",
-            "No major edge. Keep the plan simple, stay consistent, and avoid overthinking the daily noise.",
+            "Nothing special. Stay on plan.",
             "badge-yellow",
             "100% of normal plan",
             "Medium",
@@ -846,14 +962,14 @@ def action(score):
     if score <= 80:
         return (
             "BUY SMALLER",
-            "Market is healthy but hot. Keep buying, but avoid a big emotional lump-sum taxable buy today.",
+            "Hot market. Keep buying, just size down today.",
             "badge-red",
             "25%–50% of planned lump sum",
             "Medium-High",
         )
     return (
         "DON’T CHASE",
-        "Sentiment is stretched. Keep your scheduled DCA, but avoid forcing a large new buy into a hot market.",
+        "Too hot. Keep DCA on, but do not chase.",
         "badge-red",
         "DCA only / wait for pullback",
         "Medium-High",
@@ -1291,10 +1407,10 @@ confidence, confidence_reason = confidence_text(score, signal_df)
 marker_left = 0 if score is None else max(0, min(100, score))
 
 today_summary = {
-    "BUY MORE": "Fear is elevated. Bigger tranches are reasonable.",
-    "BUY A LITTLE MORE": "Fear is present. Slightly increase the next buy.",
-    "BUY NORMALLY": "Balanced setup. Stay on the normal plan.",
-    "BUY SMALLER": "Hot market. Use a smaller tranche today.",
+    "BUY MORE": "Fear is high. Bigger buy is reasonable.",
+    "BUY A LITTLE MORE": "Fear is up. Increase the next buy a bit.",
+    "BUY NORMALLY": "Balanced setup. Stay on plan.",
+    "BUY SMALLER": "Hot market. Use a smaller buy today.",
     "DON’T CHASE": "Stretched market. DCA only.",
     "WAIT": "Data incomplete. Use normal DCA until refresh.",
 }.get(act, "Use the signal to size the next buy.")
@@ -1308,9 +1424,9 @@ buffett_lens, bogle_lens, momentum_lens = lens_copy(signal_df, spx["dist"])
 st.markdown(f"""
 <div class="hero">
   <div class="hero-title">📈 Should I Buy Today?</div>
-  <div class="hero-sub">Today’s taxable-buy signal: <b>{act}</b>. Suggested buy: <b>{now_percent}</b>. Put the rest on DCA.</div>
-  <div class="today-summary">{today_summary}</div>
-  <div class="hero-sub">Updated {datetime.now().strftime("%b %d, %Y %I:%M %p")}.</div>
+  <div class="hero-sub">Today: <b>{act}</b> · Buy <b>{now_percent}</b> now · DCA the rest.</div>
+  <div class="today-summary">Live signal · {heat} market</div>
+  <div class="hero-updated">Updated {datetime.now().strftime("%b %d, %Y %I:%M %p")}</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1329,7 +1445,7 @@ with top_left:
     <div class="big-heat-score">{score if score is not None else "N/A"}</div>
   </div>
 
-  <div class="meter-subtitle">Higher = hotter market. Hot does not mean sell — it means buy smaller.</div>
+  <div class="meter-subtitle">Hot = buy smaller, not sell.</div>
 
   <div class="meter"></div>
   <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
@@ -1347,7 +1463,7 @@ with top_right:
 <div class="card action-card compact-action-card">
   <div class="kicker">What to do</div>
   <div class="action-word compact-action">{act}</div>
-  <div class="main-copy">{act_copy}</div>
+  <div class="main-copy compact-copy">Size down today. Stay invested.</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1355,14 +1471,14 @@ with top_right:
     with a1:
         st.markdown(f"""
 <div class="buy-tile">
-  <div class="buy-label">Buy today</div>
+  <div class="buy-label">Now</div>
   <div class="buy-value">{now_percent}</div>
 </div>
 """, unsafe_allow_html=True)
     with a2:
         st.markdown(f"""
 <div class="buy-tile">
-  <div class="buy-label">Rest of cash</div>
+  <div class="buy-label">Later</div>
   <div class="buy-value">{plan_action}</div>
 </div>
 """, unsafe_allow_html=True)
@@ -1370,7 +1486,7 @@ with top_right:
     st.markdown("""
 <div class="buy-tile avoid-tile">
   <div class="buy-label">Avoid</div>
-  <div class="buy-value">Big emotional lump sum</div>
+  <div class="buy-value">Chasing</div>
 </div>
 """, unsafe_allow_html=True)
 
