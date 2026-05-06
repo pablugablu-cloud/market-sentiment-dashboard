@@ -1,6 +1,7 @@
 
 import os
 import math
+import time
 from datetime import datetime
 
 import pandas as pd
@@ -1231,6 +1232,296 @@ div[data-testid="stButton"] button:hover {{
     }}
 }}
 
+
+/* ============================================================
+   Benchmark motion layer: scan → score → meter → decision → reasons
+   ============================================================ */
+
+@property --scoreNum {{
+    syntax: "<integer>";
+    initial-value: 0;
+    inherits: false;
+}}
+
+@keyframes trueCountUp {{
+    from {{ --scoreNum: 0; }}
+    to {{ --scoreNum: var(--scoreTarget); }}
+}}
+
+@keyframes meterFill {{
+    from {{ clip-path: inset(0 100% 0 0 round 999px); }}
+    to {{ clip-path: inset(0 0 0 0 round 999px); }}
+}}
+
+@keyframes lockIn {{
+    0% {{ opacity: 0; transform: translateY(16px) scale(.94); filter: blur(5px); }}
+    55% {{ opacity: 1; transform: translateY(-3px) scale(1.035); filter: blur(0); }}
+    100% {{ opacity: 1; transform: translateY(0) scale(1); }}
+}}
+
+@keyframes checkPulse {{
+    0%, 100% {{ transform: scale(1); box-shadow: 0 0 0 0 rgba(34,197,94,.30); }}
+    50% {{ transform: scale(1.08); box-shadow: 0 0 0 9px rgba(34,197,94,0); }}
+}}
+
+@keyframes dotReveal {{
+    from {{ opacity: 0; transform: translateY(8px) scale(.82); }}
+    to {{ opacity: 1; transform: translateY(0) scale(1); }}
+}}
+
+@keyframes dotPulse {{
+    0%, 100% {{ transform: scale(1); opacity: .82; }}
+    50% {{ transform: scale(1.18); opacity: 1; }}
+}}
+
+@keyframes scanLine {{
+    0% {{ transform: translateX(-120%); opacity: 0; }}
+    12% {{ opacity: 1; }}
+    85% {{ opacity: .8; }}
+    100% {{ transform: translateX(130%); opacity: 0; }}
+}}
+
+@keyframes scanProgress {{
+    from {{ width: 0%; }}
+    to {{ width: 100%; }}
+}}
+
+@keyframes chartReveal {{
+    from {{ opacity: 0; transform: translateY(18px) scale(.99); filter: blur(6px); }}
+    to {{ opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }}
+}}
+
+@keyframes magneticGlow {{
+    0%, 100% {{ background-position: 0% 50%; }}
+    50% {{ background-position: 100% 50%; }}
+}}
+
+.scan-shell {{
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    border: 1px solid {t["border"]};
+    background:
+      radial-gradient(circle at 20% 20%, rgba(96,165,250,.16), transparent 32%),
+      radial-gradient(circle at 85% 15%, rgba(34,197,94,.12), transparent 30%),
+      linear-gradient(180deg, {t["surface"]}, {t["surface2"]});
+    box-shadow: {t["shadow"]};
+    padding: 26px 28px;
+    margin: 8px 0 18px;
+}}
+
+.scan-shell::after {{
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 38%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.13), transparent);
+    animation: scanLine 1.25s ease-in-out infinite;
+}}
+
+.scan-title {{
+    color: {t["text"]};
+    font-size: 23px;
+    font-weight: 950;
+    letter-spacing: -.5px;
+}}
+
+.scan-steps {{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}}
+
+.scan-chip {{
+    border-radius: 999px;
+    padding: 8px 11px;
+    color: {t["muted"]};
+    background: {t["surface"]};
+    border: 1px solid {t["border"]};
+    font-size: 12px;
+    font-weight: 850;
+    animation: dotReveal .55s ease both;
+}}
+
+.scan-chip:nth-child(1) {{ animation-delay: .04s; }}
+.scan-chip:nth-child(2) {{ animation-delay: .18s; }}
+.scan-chip:nth-child(3) {{ animation-delay: .32s; }}
+.scan-chip:nth-child(4) {{ animation-delay: .46s; }}
+
+.scan-bar {{
+    height: 8px;
+    border-radius: 999px;
+    background: {t["surface3"]};
+    margin-top: 18px;
+    overflow: hidden;
+}}
+
+.scan-fill {{
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, {t["green"]}, {t["yellow"]}, {t["red"]});
+    animation: scanProgress 1.05s cubic-bezier(.2,.8,.2,1) both;
+}}
+
+.score-count {{
+    color: transparent !important;
+    position: relative;
+    --scoreNum: 0;
+    animation:
+      trueCountUp 1.15s cubic-bezier(.16,.9,.2,1) forwards,
+      subtleDrift 4.2s ease-in-out infinite 1.2s !important;
+}}
+
+.score-count::after {{
+    content: counter(scoreCounter);
+    counter-reset: scoreCounter var(--scoreNum);
+    color: {t["text"]};
+    position: absolute;
+    inset: 0;
+}}
+
+.hero-meter-card .meter {{
+    animation: meterFill 1.05s cubic-bezier(.16,.9,.2,1) both;
+    transform-origin: left center;
+}}
+
+.signal-dots {{
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 9px;
+    margin-top: 22px;
+}}
+
+.signal-dot-card {{
+    border: 1px solid {t["border"]};
+    background: rgba(255,255,255,.035);
+    border-radius: 17px;
+    padding: 10px 9px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    opacity: 0;
+    animation: dotReveal .52s cubic-bezier(.2,.9,.2,1) both;
+}}
+
+.signal-dot-card:nth-child(1) {{ animation-delay: .24s; }}
+.signal-dot-card:nth-child(2) {{ animation-delay: .34s; }}
+.signal-dot-card:nth-child(3) {{ animation-delay: .44s; }}
+.signal-dot-card:nth-child(4) {{ animation-delay: .54s; }}
+.signal-dot-card:nth-child(5) {{ animation-delay: .64s; }}
+
+.signal-dot {{
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    animation: dotPulse 2.2s ease-in-out infinite;
+}}
+
+.signal-dot.red {{ background: {t["red"]}; box-shadow: 0 0 18px rgba(251,113,133,.34); }}
+.signal-dot.yellow {{ background: {t["yellow"]}; box-shadow: 0 0 18px rgba(251,191,36,.28); }}
+.signal-dot.green {{ background: {t["green"]}; box-shadow: 0 0 18px rgba(34,197,94,.30); }}
+.signal-dot.blue {{ background: {t["blue"]}; box-shadow: 0 0 18px rgba(96,165,250,.28); }}
+
+.signal-dot-label {{
+    color: {t["muted"]};
+    font-size: 11px;
+    font-weight: 900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}}
+
+.meter-verdict {{
+    animation:
+      lockIn .7s cubic-bezier(.16,.9,.2,1) both .55s,
+      verdictGlow 2.5s ease-in-out infinite 1.25s !important;
+}}
+
+.lock-check {{
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: {t["green_bg"]};
+    color: {t["green"]};
+    font-size: 14px;
+    font-weight: 950;
+    margin-right: 10px;
+    animation: checkPulse 2.2s ease-in-out infinite;
+}}
+
+.no-panic-chip {{
+    margin-top: 12px;
+    border-radius: 18px;
+    padding: 13px 15px;
+    color: {t["muted"]};
+    background: {t["surface"]};
+    border: 1px solid {t["border"]};
+    font-size: 14px;
+    font-weight: 850;
+    animation: lockIn .7s cubic-bezier(.16,.9,.2,1) both .75s;
+}}
+
+.no-panic-chip b {{
+    color: {t["text"]};
+}}
+
+.card, .buy-tile, .driver-card, .metric-card, .lens-card, .signal-row {{
+    position: relative;
+    overflow: hidden;
+}}
+
+.card::before, .buy-tile::before, .driver-card::before, .metric-card::before, .lens-card::before {{
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(120deg, rgba(96,165,250,.0), rgba(96,165,250,.18), rgba(251,113,133,.12), rgba(34,197,94,.10), rgba(96,165,250,.0));
+    background-size: 250% 250%;
+    animation: magneticGlow 6s ease-in-out infinite;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .22s ease;
+}}
+
+.card:hover::before, .buy-tile:hover::before, .driver-card:hover::before, .metric-card:hover::before, .lens-card:hover::before {{
+    opacity: 1;
+}}
+
+.chart-motion-wrap {{
+    animation: chartReveal .8s cubic-bezier(.2,.9,.2,1) both;
+    border-radius: 24px;
+    overflow: hidden;
+}}
+
+@media (max-width: 900px) {{
+    .signal-dots {{ grid-template-columns: 1fr 1fr; }}
+}}
+
+@media (prefers-reduced-motion: reduce) {{
+    .scan-shell,
+    .scan-shell::after,
+    .scan-chip,
+    .scan-fill,
+    .score-count,
+    .hero-meter-card .meter,
+    .signal-dot-card,
+    .signal-dot,
+    .meter-verdict,
+    .lock-check,
+    .no-panic-chip,
+    .chart-motion-wrap {{
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+    }}
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1722,6 +2013,32 @@ def confidence_text(score, signal_df):
     return "Medium", "Signals are mixed enough that the safest move is to stay disciplined, not make an emotional trade."
 
 
+
+def dot_color_for_signal(signal, what_to_do):
+    text = f"{signal} {what_to_do}".lower()
+    if any(x in text for x in ["do not chase", "buy smaller", "caution", "overbought", "greedy"]):
+        return "red"
+    if any(x in text for x in ["better buy", "oversold", "fearful"]):
+        return "green"
+    if any(x in text for x in ["neutral", "small impact"]):
+        return "yellow"
+    return "blue"
+
+
+def build_signal_dots(signal_df):
+    preferred = ["S&P 500 RSI", "Put/Call", "S&P vs 200D", "VIX", "News"]
+    items = []
+    for signal in preferred:
+        rows = signal_df[signal_df["Signal"] == signal]
+        if rows.empty:
+            continue
+        row = rows.iloc[0]
+        label = signal.replace("S&P 500 ", "")
+        color = dot_color_for_signal(row["Signal"], row["What to do"])
+        items.append((label, color))
+    return items
+
+
 def lens_copy(signal_df, dist):
     rsi_row = signal_df[signal_df["Signal"] == "S&P 500 RSI"]
     pcr_row = signal_df[signal_df["Signal"] == "Put/Call"]
@@ -1760,6 +2077,25 @@ with c3:
 t = current_theme()
 inject_css(t)
 
+
+scan_placeholder = st.empty()
+with scan_placeholder.container():
+    st.markdown("""
+<div class="scan-shell">
+  <div class="scan-title">Scanning today’s market setup…</div>
+  <div class="scan-steps">
+    <span class="scan-chip">S&P 500</span>
+    <span class="scan-chip">RSI</span>
+    <span class="scan-chip">Put/Call</span>
+    <span class="scan-chip">Market Heat</span>
+  </div>
+  <div class="scan-bar"><div class="scan-fill"></div></div>
+</div>
+""", unsafe_allow_html=True)
+time.sleep(0.75)
+scan_placeholder.empty()
+
+
 with st.spinner("Building today’s market read..."):
     spx = fetch_sp500()
     vix = fetch_vix()
@@ -1782,6 +2118,7 @@ act, act_copy, act_class, tranche, base_conf = action(score)
 plan_name, now_percent, plan_action = next_cash_plan(score)
 signal_df = build_driver_rows(vix, spx["rsi"], spx["dist"], pcr, curve, trends, news_score)
 confidence, confidence_reason = confidence_text(score, signal_df)
+signal_dots = build_signal_dots(signal_df)
 marker_left = 0 if score is None else max(0, min(100, score))
 
 today_summary = {
@@ -1820,7 +2157,7 @@ with top_left:
       <div class="score-label">Market Heat Meter</div>
       <div class="meter-title">{heat}</div>
     </div>
-    <div class="big-heat-score score-count">{score if score is not None else "N/A"}</div>
+    <div class="big-heat-score score-count" style="--scoreTarget:{score if score is not None else 0};">{score if score is not None else "N/A"}</div>
   </div>
 
   <div class="meter-subtitle">Hot market. Smaller buy. Stay invested.</div>
@@ -1829,10 +2166,15 @@ with top_left:
   <div class="marker" style="--target-left:{marker_left}%; left: calc({marker_left}% - 10px);"></div>
   <div class="scale"><span>Buy More</span><span>Normal</span><span>Buy Less</span></div>
 
+  <div class="signal-dots">
+    {''.join([f'<div class="signal-dot-card"><span class="signal-dot {color}"></span><span class="signal-dot-label">{label}</span></div>' for label, color in signal_dots])}
+  </div>
+
   <div class="meter-verdict">
-    <span class="meter-verdict-label">Today’s call</span>
+    <span class="meter-verdict-label"><span class="lock-check">✓</span>Today’s call</span>
     <span class="meter-verdict-value">{act}</span>
   </div>
+  <div class="no-panic-chip"><b>No panic.</b> No sell. Just size the next buy.</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1966,6 +2308,7 @@ with tab1:
     st.dataframe(raw_df, use_container_width=True, hide_index=True)
 
 with tab2:
+    st.markdown('<div class="chart-motion-wrap">', unsafe_allow_html=True)
     hist = spx["history"]
     fig = go.Figure()
     if "Date" in hist and "Close" in hist:
