@@ -633,6 +633,9 @@ div[data-testid="stButton"] button:hover {{
 
 
 @media (max-width: 900px) {{
+    .big-heat-score {{ font-size: 78px; }}
+    .meter-title {{ font-size: 36px; }}
+    .meter-verdict {{ flex-direction: column; align-items: flex-start; }}
     .command-grid {{ grid-template-columns: 1fr; }}
     .command-header {{ flex-direction: column; }}
     .command-score {{ text-align: left; }}
@@ -645,6 +648,102 @@ div[data-testid="stButton"] button:hover {{
     .signal-row {{ grid-template-columns: 1fr; gap: 6px; }}
     .signal-do {{ text-align: left; }}
 }}
+
+.hero-meter-card {{
+    min-height: 410px;
+    padding: 34px;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(239,68,68,.12), transparent 38%),
+      linear-gradient(180deg, {t["surface"]} 0%, {t["surface2"]} 100%);
+}}
+
+.meter-head {{
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: flex-start;
+}}
+
+.meter-title {{
+    color: {t["text"]};
+    font-size: 44px;
+    font-weight: 950;
+    letter-spacing: -1.5px;
+    margin-top: 8px;
+}}
+
+.big-heat-score {{
+    color: {t["text"]};
+    font-size: 104px;
+    line-height: .82;
+    font-weight: 950;
+    letter-spacing: -5px;
+}}
+
+.meter-subtitle {{
+    color: {t["muted"]};
+    font-size: 16px;
+    line-height: 1.45;
+    margin-top: 18px;
+    margin-bottom: 34px;
+    max-width: 560px;
+}}
+
+.hero-meter-card .meter {{
+    height: 24px;
+}}
+
+.hero-meter-card .marker {{
+    width: 26px;
+    height: 26px;
+    margin-top: -25px;
+    border-width: 5px;
+}}
+
+.hero-meter-card .scale {{
+    font-size: 13px;
+    margin-top: 14px;
+}}
+
+.meter-verdict {{
+    margin-top: 32px;
+    border-radius: 22px;
+    padding: 18px 20px;
+    background: {t["red_bg"]};
+    border: 1px solid rgba(239,68,68,.18);
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: center;
+}}
+
+.meter-verdict-label {{
+    color: {t["muted"]};
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+}}
+
+.meter-verdict-value {{
+    color: {t["red"]};
+    font-size: 26px;
+    font-weight: 950;
+    letter-spacing: -.7px;
+}}
+
+.compact-action-card {{
+    min-height: 235px;
+}}
+
+.compact-action {{
+    font-size: 46px;
+}}
+
+.avoid-tile {{
+    margin-top: 12px;
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1209,33 +1308,50 @@ buffett_lens, bogle_lens, momentum_lens = lens_copy(signal_df, spx["dist"])
 st.markdown(f"""
 <div class="hero">
   <div class="hero-title">📈 Should I Buy Today?</div>
-  <div class="hero-sub">One simple answer for long-term index investors: buy more, buy normally, buy smaller, or wait.</div>
+  <div class="hero-sub">Today’s taxable-buy signal: <b>{act}</b>. Suggested buy: <b>{now_percent}</b>. Put the rest on DCA.</div>
   <div class="today-summary">{today_summary}</div>
   <div class="hero-sub">Updated {datetime.now().strftime("%b %d, %Y %I:%M %p")}.</div>
 </div>
 """, unsafe_allow_html=True)
 
 
-top_left, top_right = st.columns([0.63, 0.37], gap="large")
+
+top_left, top_right = st.columns([0.58, 0.42], gap="large")
 
 with top_left:
     st.markdown(f"""
-<div class="card action-card">
-  <div class="command-header">
+<div class="card hero-meter-card">
+  <div class="meter-head">
     <div>
-      <div class="kicker">Today’s Move</div>
-      <div class="action-word">{act}</div>
+      <div class="score-label">Market Heat Meter</div>
+      <div class="meter-title">{heat}</div>
     </div>
-    <div class="command-score">
-      <div class="command-score-num">{score if score is not None else "N/A"}</div>
-      <div class="command-score-label">{heat} heat</div>
-    </div>
+    <div class="big-heat-score">{score if score is not None else "N/A"}</div>
   </div>
+
+  <div class="meter-subtitle">Higher = hotter market. Hot does not mean sell — it means buy smaller.</div>
+
+  <div class="meter"></div>
+  <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
+  <div class="scale"><span>Buy More</span><span>Normal</span><span>Buy Less</span></div>
+
+  <div class="meter-verdict">
+    <span class="meter-verdict-label">Today’s call</span>
+    <span class="meter-verdict-value">{act}</span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+with top_right:
+    st.markdown(f"""
+<div class="card action-card compact-action-card">
+  <div class="kicker">What to do</div>
+  <div class="action-word compact-action">{act}</div>
   <div class="main-copy">{act_copy}</div>
 </div>
 """, unsafe_allow_html=True)
 
-    a1, a2, a3 = st.columns(3)
+    a1, a2 = st.columns(2)
     with a1:
         st.markdown(f"""
 <div class="buy-tile">
@@ -1250,25 +1366,11 @@ with top_left:
   <div class="buy-value">{plan_action}</div>
 </div>
 """, unsafe_allow_html=True)
-    with a3:
-        st.markdown("""
-<div class="buy-tile">
-  <div class="buy-label">Avoid</div>
-  <div class="buy-value">Big lump sum</div>
-</div>
-""", unsafe_allow_html=True)
 
-with top_right:
-    st.markdown(f"""
-<div class="card score-card">
-  <div class="score-label">Market Heat Meter</div>
-  <div class="score-mini left-score-mini">0 = fearful / better entry · 100 = hot / buy less</div>
-  <div class="meter"></div>
-  <div class="marker" style="left: calc({marker_left}% - 10px);"></div>
-  <div class="scale"><span>Buy More</span><span>Normal</span><span>Buy Less</span></div>
-  <div class="heat-explainer">
-    <b>Beginner read:</b> this does not say “sell.” It says the market is hot enough that a smaller taxable buy is smarter than chasing.
-  </div>
+    st.markdown("""
+<div class="buy-tile avoid-tile">
+  <div class="buy-label">Avoid</div>
+  <div class="buy-value">Big emotional lump sum</div>
 </div>
 """, unsafe_allow_html=True)
 
