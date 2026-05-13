@@ -56,8 +56,8 @@ LIGHT = {
     "green_bg": "rgba(22,163,74,.12)",
     "yellow": "#f59e0b",
     "yellow_bg": "rgba(245,158,11,.13)",
-    "red": "#ef4444",
-    "red_bg": "rgba(239,68,68,.12)",
+    "red": "#f97316",
+    "red_bg": "rgba(249,115,22,.10)",
     "blue": "#2563eb",
     "blue_bg": "rgba(37,99,235,.11)",
     "purple": "#7c3aed",
@@ -79,8 +79,8 @@ DARK = {
     "green_bg": "rgba(34,197,94,.14)",
     "yellow": "#fbbf24",
     "yellow_bg": "rgba(251,191,36,.14)",
-    "red": "#fb7185",
-    "red_bg": "rgba(251,113,133,.14)",
+    "red": "#fb923c",
+    "red_bg": "rgba(251,146,60,.13)",
     "blue": "#60a5fa",
     "blue_bg": "rgba(96,165,250,.13)",
     "purple": "#a78bfa",
@@ -1560,6 +1560,253 @@ div[data-testid="stButton"] button:hover {{
     max-width: none;
 }}
 
+
+
+/* ============================================================
+   V2 polish pass: preserve original flow, upgrade skin only
+   ============================================================ */
+.block-container {{
+    max-width: 1280px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}}
+
+.stApp {{
+    background:
+      radial-gradient(circle at 12% -4%, rgba(96,165,250,.12), transparent 30%),
+      radial-gradient(circle at 88% 0%, rgba(34,197,94,.08), transparent 28%),
+      linear-gradient(180deg, {t["bg"]} 0%, {t["surface3"]} 100%);
+}}
+
+.stApp::before {{
+    opacity: .45;
+    filter: blur(34px);
+    animation-duration: 22s;
+}}
+
+.hero {{
+    border-radius: 30px;
+    padding: 32px 34px;
+    margin-top: 10px;
+    margin-bottom: 22px;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,.72), rgba(255,255,255,.42)),
+      linear-gradient(135deg, {t["surface"]} 0%, {t["surface2"]} 100%);
+    border: 1px solid {t["border"]};
+    box-shadow: 0 22px 60px rgba(15,23,42,.075);
+    animation: cardRise .55s cubic-bezier(.2,.9,.2,1) both !important;
+}}
+
+.hero::after {{
+    opacity: .65;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(96,165,250,.12), transparent 62%);
+}}
+
+.hero-title {{
+    font-size: clamp(34px, 4vw, 46px);
+    letter-spacing: -1.9px;
+}}
+
+.hero-sub {{
+    font-size: 16px;
+    font-weight: 700;
+    color: {t["muted"]};
+}}
+
+.today-summary {{
+    margin-top: 18px;
+    padding: 8px 12px;
+    font-size: 13px;
+    background: {t["blue_bg"]};
+    border-color: rgba(96,165,250,.20);
+    box-shadow: none;
+}}
+
+.hero-updated {{
+    margin-top: 16px;
+    font-size: 13px;
+}}
+
+.card, .driver-card, .metric-card, .lens-card, .buy-tile {{
+    border-radius: 26px;
+    background: linear-gradient(180deg, {t["surface"]} 0%, {t["surface2"]} 100%);
+    border: 1px solid {t["border"]};
+    box-shadow: 0 18px 48px rgba(15,23,42,.07);
+    animation: cardRise .5s cubic-bezier(.2,.9,.2,1) both !important;
+}}
+
+.card:hover, .driver-card:hover, .metric-card:hover, .lens-card:hover, .buy-tile:hover {{
+    transform: translateY(-3px) scale(1.004);
+    box-shadow: 0 22px 56px rgba(15,23,42,.10);
+}}
+
+.hero-meter-card {{
+    min-height: 392px;
+    padding: 34px;
+    background:
+      radial-gradient(circle at 96% 4%, rgba(249,115,22,.10), transparent 34%),
+      linear-gradient(180deg, {t["surface"]} 0%, {t["surface2"]} 100%);
+}}
+
+.hero-meter-card::before {{
+    opacity: .35;
+    animation-duration: 4.8s;
+}}
+
+.meter-title {{
+    font-size: 40px;
+    letter-spacing: -1.2px;
+}}
+
+.big-heat-score {{
+    font-size: clamp(78px, 8vw, 104px);
+    letter-spacing: -5px;
+}}
+
+.meter-subtitle {{
+    font-size: 16px;
+    line-height: 1.45;
+    max-width: 620px;
+    color: {t["muted"]};
+}}
+
+.hero-meter-card .meter {{
+    height: 22px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
+}}
+
+.hero-meter-card .meter::before,
+.hero-meter-card .meter::after,
+.meter-verdict::after {{
+    opacity: .45;
+}}
+
+.hero-meter-card .marker {{
+    animation: markerGlide .85s cubic-bezier(.16,.9,.2,1) both, markerPulseHeavy 2.6s ease-out infinite 1s !important;
+}}
+
+.signal-dots {{
+    gap: 10px;
+    margin-top: 24px;
+}}
+
+.signal-dot-card {{
+    background: rgba(255,255,255,.28);
+    border-color: {t["border"]};
+    border-radius: 999px;
+    padding: 9px 10px;
+}}
+
+.meter-verdict {{
+    margin-top: 28px;
+    background: rgba(249,115,22,.08);
+    border: 1px solid rgba(249,115,22,.16);
+    box-shadow: none;
+    animation: lockIn .55s cubic-bezier(.16,.9,.2,1) both .45s !important;
+}}
+
+.meter-verdict-value {{
+    color: {t["text"]};
+    text-shadow: none;
+}}
+
+.lock-check {{
+    background: {t["green_bg"]};
+    color: {t["green"]};
+}}
+
+.no-panic-chip {{
+    background: {t["surface"]};
+    border-color: {t["border"]};
+    color: {t["muted"]};
+}}
+
+.compact-action-card {{
+    min-height: 232px;
+    padding: 30px;
+}}
+
+.compact-action {{
+    font-size: clamp(38px, 4vw, 52px);
+    letter-spacing: -1.6px;
+}}
+
+.compact-copy {{
+    font-size: 19px;
+    color: {t["muted"]};
+}}
+
+.buy-tile {{
+    border-radius: 22px;
+    min-height: 88px;
+}}
+
+.buy-value {{
+    font-size: 21px;
+    letter-spacing: -.35px;
+}}
+
+.section {{
+    font-size: 25px;
+    margin-top: 28px;
+    margin-bottom: 10px;
+}}
+
+.section-sub {{
+    font-size: 14px;
+    margin-bottom: 14px;
+}}
+
+.driver-card, .lens-card {{
+    min-height: 148px;
+}}
+
+.driver-title, .lens-head {{
+    letter-spacing: -.55px;
+}}
+
+.metric-card {{
+    min-height: 148px;
+}}
+
+.metric-value {{
+    font-size: 32px;
+}}
+
+.signal-row {{
+    border-radius: 18px;
+    padding: 14px 16px;
+    background: {t["surface"]};
+    box-shadow: 0 10px 26px rgba(15,23,42,.045);
+}}
+
+.stTabs [data-baseweb="tab"] {{
+    border-radius: 999px;
+    padding-left: 14px;
+    padding-right: 14px;
+}}
+
+.stTabs [aria-selected="true"] {{
+    border-color: rgba(249,115,22,.48) !important;
+    background: rgba(249,115,22,.08) !important;
+}}
+
+.footer {{
+    margin-top: 32px;
+    padding-bottom: 24px;
+}}
+
+@media (max-width: 900px) {{
+    .block-container {{ padding-left: 1rem; padding-right: 1rem; }}
+    .hero {{ padding: 26px 24px; border-radius: 26px; }}
+    .hero-meter-card {{ padding: 26px 22px; min-height: auto; }}
+    .meter-head {{ flex-direction: column; gap: 10px; }}
+    .signal-dots {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+    .buy-tile {{ min-height: auto; }}
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -2202,7 +2449,7 @@ with top_left:
     <div class="big-heat-score score-pop-real">{score if score is not None else "N/A"}</div>
   </div>
 
-  <div class="meter-subtitle">Hot market. Smaller buy. Stay invested.</div>
+  <div class="meter-subtitle">{act_copy}</div>
 
   <div class="meter"></div>
   <div class="marker" style="--target-left:{marker_left}%; left: calc({marker_left}% - 10px);"></div>
@@ -2225,7 +2472,7 @@ with top_right:
 <div class="card action-card compact-action-card">
   <div class="kicker">What to do</div>
   <div class="action-word compact-action">{act}</div>
-  <div class="main-copy compact-copy">Smaller buy. No panic.</div>
+  <div class="main-copy compact-copy">{act_copy}</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -2395,4 +2642,3 @@ Educational only. Not financial advice. Best use: decide whether to buy more, no
 This app is designed for long-term index investors sizing taxable buys, not traders trying to predict tomorrow.
 </div>
 """, unsafe_allow_html=True)
-
