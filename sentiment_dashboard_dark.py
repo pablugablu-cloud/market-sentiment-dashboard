@@ -3,6 +3,7 @@ import os
 import math
 import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -22,6 +23,8 @@ try:
 except Exception:
     TrendReq = None
 
+# Fetch the current time specifically in the Pacific timezone
+pacific_time = datetime.now(ZoneInfo("America/Los_Angeles"))
 
 # ============================================================
 # App Config
@@ -2183,7 +2186,7 @@ st.markdown(f"""
   <div class="hero-title">📈 Should I Buy Today?</div>
   <div class="hero-sub"><b>{act}</b> · Buy <b>{now_percent}</b> now · DCA the rest</div>
   <div class="today-summary"><span class="live-dot"></span>Live · {heat}</div>
-  <div class="hero-updated">Updated {datetime.now().strftime("%b %d, %Y %I:%M %p")}</div>
+  <div class="hero-updated">Updated {pacific_time.strftime("%b %d, %Y %I:%M %p")}</div>
 </div>
 """, unsafe_allow_html=True)
 
