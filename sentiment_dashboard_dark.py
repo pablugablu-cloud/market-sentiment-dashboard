@@ -204,18 +204,55 @@ div[role="radiogroup"] label {{
     background: {t['green']};
 }}
 
-/* Decision card */
+/* Decision card — restrained premium motion */
 .decision-card {{
     position: relative;
+    isolation: isolate;
     overflow: hidden;
     background:
-        radial-gradient(circle at 100% 0%, rgba(251,113,133,.10), transparent 35%),
+        radial-gradient(circle at 100% 0%, rgba(251,113,133,.11), transparent 35%),
+        radial-gradient(circle at 0% 100%, rgba(96,165,250,.07), transparent 34%),
         linear-gradient(145deg, {t['surface']} 0%, {t['surface2']} 100%);
     border: 1px solid {t['border']};
     border-radius: 28px;
     box-shadow: {t['shadow']};
     padding: 30px;
-    animation: rise .55s cubic-bezier(.2,.8,.2,1) both;
+    transform: translateZ(0);
+    animation: decisionReveal .72s cubic-bezier(.16,.88,.24,1) both;
+}}
+
+.decision-card::before {{
+    content: "";
+    position: absolute;
+    z-index: 0;
+    width: 480px;
+    height: 480px;
+    right: -220px;
+    top: -270px;
+    border-radius: 999px;
+    background:
+        radial-gradient(circle at 42% 46%, rgba(251,113,133,.22), rgba(96,165,250,.08) 36%, transparent 69%);
+    filter: blur(8px);
+    opacity: .72;
+    pointer-events: none;
+    animation: ambientDrift 9s ease-in-out infinite;
+}}
+
+.decision-card::after {{
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    width: 34%;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,.075), transparent);
+    transform: translateX(-135%) skewX(-12deg);
+    animation: cardSweep 1.45s cubic-bezier(.2,.75,.2,1) .30s 1 both;
+}}
+
+.decision-card > * {{
+    position: relative;
+    z-index: 1;
 }}
 
 .decision-grid {{
@@ -233,6 +270,10 @@ div[role="radiogroup"] label {{
     letter-spacing: .72px;
 }}
 
+.decision-card .decision-grid > div:first-child > .eyebrow {{
+    animation: contentReveal .56s cubic-bezier(.2,.8,.2,1) .05s both;
+}}
+
 .action-title {{
     color: {t['text']};
     font-size: clamp(39px, 5vw, 61px);
@@ -240,6 +281,8 @@ div[role="radiogroup"] label {{
     line-height: .96;
     letter-spacing: -2.2px;
     margin-top: 10px;
+    transform-origin: left center;
+    animation: titleReveal .78s cubic-bezier(.16,.9,.22,1) .08s both;
 }}
 
 .action-copy {{
@@ -248,6 +291,7 @@ div[role="radiogroup"] label {{
     line-height: 1.5;
     margin-top: 15px;
     max-width: 650px;
+    animation: contentReveal .62s cubic-bezier(.2,.8,.2,1) .20s both;
 }}
 
 .guardrail {{
@@ -262,13 +306,48 @@ div[role="radiogroup"] label {{
     border-radius: 12px;
     font-size: 13px;
     font-weight: 800;
+    box-shadow: 0 0 0 rgba(96,165,250,0);
+    transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+    animation:
+        contentReveal .62s cubic-bezier(.2,.8,.2,1) .31s backwards,
+        guardrailBreathe 4.8s ease-in-out 1.25s infinite;
+}}
+
+.guardrail:hover {{
+    transform: translateY(-2px);
+    border-color: rgba(96,165,250,.34);
+    box-shadow: 0 12px 28px rgba(37,99,235,.12);
 }}
 
 .score-panel {{
-    background: rgba(255,255,255,.025);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(145deg, rgba(255,255,255,.035), rgba(255,255,255,.015));
     border: 1px solid {t['border']};
     border-radius: 22px;
     padding: 20px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+    animation: panelReveal .70s cubic-bezier(.16,.88,.24,1) .14s backwards;
+}}
+
+.score-panel::before {{
+    content: "";
+    position: absolute;
+    left: 9%;
+    right: 9%;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(96,165,250,.72), rgba(251,113,133,.62), transparent);
+    background-size: 220% 100%;
+    animation: accentFlow 5.8s linear infinite;
+}}
+
+.score-panel:hover {{
+    transform: translateY(-3px);
+    border-color: {t['border2']};
+    box-shadow: 0 18px 42px rgba(0,0,0,.17);
 }}
 
 .score-row {{
@@ -291,20 +370,38 @@ div[role="radiogroup"] label {{
     font-weight: 950;
     line-height: .82;
     letter-spacing: -3px;
-    animation: scoreIn .7s cubic-bezier(.2,.9,.2,1) both;
+    text-shadow: 0 0 0 rgba(251,113,133,0);
+    animation:
+        scoreIn .82s cubic-bezier(.16,.9,.22,1) .22s both,
+        scoreGlow 4.6s ease-in-out 1.25s infinite;
 }}
 
 .heat-meter {{
     position: relative;
     height: 14px;
     margin-top: 26px;
+    overflow: hidden;
     border-radius: 999px;
     background: linear-gradient(90deg, {t['green']} 0 34%, {t['yellow']} 34% 66%, {t['red']} 66% 100%);
+    transform-origin: left center;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.18), 0 6px 18px rgba(0,0,0,.10);
+    animation: meterReveal .85s cubic-bezier(.16,.88,.24,1) .34s both;
+}}
+
+.heat-meter::after {{
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 27%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.32), transparent);
+    transform: translateX(-150%) skewX(-16deg);
+    animation: meterSweep 4.6s ease-in-out 1.1s infinite;
 }}
 
 .heat-marker {{
     --marker: 50%;
     position: absolute;
+    z-index: 2;
     top: 50%;
     left: var(--marker);
     width: 20px;
@@ -314,7 +411,9 @@ div[role="radiogroup"] label {{
     background: {t['text']};
     border: 4px solid {t['surface']};
     box-shadow: 0 5px 18px rgba(0,0,0,.28);
-    animation: markerIn .8s cubic-bezier(.2,.9,.2,1) both;
+    animation:
+        markerIn .92s cubic-bezier(.16,.9,.2,1) .46s both,
+        markerPulse 2.9s ease-out 1.45s infinite;
 }}
 
 .heat-scale {{
@@ -344,11 +443,38 @@ div[role="radiogroup"] label {{
 }}
 
 .plan-tile {{
+    position: relative;
+    overflow: hidden;
     min-height: 106px;
     padding: 15px;
     border-radius: 17px;
-    background: {t['surface']};
+    background: linear-gradient(180deg, {t['surface']}, {t['surface2']});
     border: 1px solid {t['border']};
+    opacity: 1;
+    transform: translateY(0);
+    transition: transform .24s ease, border-color .24s ease, box-shadow .24s ease;
+    animation: tileReveal .58s cubic-bezier(.16,.88,.24,1) backwards;
+}}
+
+.plan-tile:nth-child(1) {{ animation-delay: .39s; }}
+.plan-tile:nth-child(2) {{ animation-delay: .47s; }}
+.plan-tile:nth-child(3) {{ animation-delay: .55s; }}
+
+.plan-tile::before {{
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.20), transparent);
+    opacity: .75;
+}}
+
+.plan-tile:hover {{
+    transform: translateY(-4px);
+    border-color: {t['border2']};
+    box-shadow: 0 16px 34px rgba(0,0,0,.16);
 }}
 
 .plan-label {{
@@ -456,8 +582,71 @@ div[role="radiogroup"] label {{
 }}
 
 @keyframes rise {{ from {{ opacity: 0; transform: translateY(10px); }} to {{ opacity: 1; transform: translateY(0); }} }}
-@keyframes scoreIn {{ from {{ opacity: 0; transform: scale(.84); }} to {{ opacity: 1; transform: scale(1); }} }}
-@keyframes markerIn {{ from {{ left: 0%; }} to {{ left: var(--marker); }} }}
+@keyframes decisionReveal {{
+    from {{ opacity: 0; transform: translateY(18px) scale(.992); filter: blur(5px); }}
+    to {{ opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }}
+}}
+@keyframes ambientDrift {{
+    0%, 100% {{ transform: translate3d(0,0,0) scale(1); opacity: .62; }}
+    50% {{ transform: translate3d(-26px,22px,0) scale(1.08); opacity: .88; }}
+}}
+@keyframes cardSweep {{
+    from {{ transform: translateX(-135%) skewX(-12deg); opacity: 0; }}
+    18% {{ opacity: .9; }}
+    to {{ transform: translateX(385%) skewX(-12deg); opacity: 0; }}
+}}
+@keyframes titleReveal {{
+    from {{ opacity: 0; transform: translateY(14px) scale(.95); filter: blur(4px); }}
+    70% {{ opacity: 1; transform: translateY(-2px) scale(1.012); filter: blur(0); }}
+    to {{ opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }}
+}}
+@keyframes contentReveal {{
+    from {{ opacity: 0; transform: translateY(9px); }}
+    to {{ opacity: 1; transform: translateY(0); }}
+}}
+@keyframes panelReveal {{
+    from {{ opacity: 0; transform: translateX(16px) scale(.98); filter: blur(4px); }}
+    to {{ opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }}
+}}
+@keyframes scoreIn {{
+    from {{ opacity: 0; transform: translateY(12px) scale(.74); filter: blur(5px); }}
+    65% {{ opacity: 1; transform: translateY(-3px) scale(1.055); filter: blur(0); }}
+    to {{ opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }}
+}}
+@keyframes scoreGlow {{
+    0%, 100% {{ text-shadow: 0 0 0 rgba(251,113,133,0); }}
+    50% {{ text-shadow: 0 0 24px rgba(251,113,133,.18); }}
+}}
+@keyframes accentFlow {{
+    from {{ background-position: 0% 50%; }}
+    to {{ background-position: 220% 50%; }}
+}}
+@keyframes meterReveal {{
+    from {{ opacity: .3; transform: scaleX(.08); }}
+    to {{ opacity: 1; transform: scaleX(1); }}
+}}
+@keyframes meterSweep {{
+    0%, 56% {{ transform: translateX(-150%) skewX(-16deg); opacity: 0; }}
+    66% {{ opacity: .85; }}
+    100% {{ transform: translateX(470%) skewX(-16deg); opacity: 0; }}
+}}
+@keyframes markerIn {{
+    from {{ left: 0%; opacity: .4; transform: translate(-50%, -50%) scale(.72); }}
+    70% {{ left: var(--marker); opacity: 1; transform: translate(-50%, -50%) scale(1.14); }}
+    to {{ left: var(--marker); opacity: 1; transform: translate(-50%, -50%) scale(1); }}
+}}
+@keyframes markerPulse {{
+    0%, 100% {{ box-shadow: 0 0 0 0 rgba(255,255,255,.22), 0 5px 18px rgba(0,0,0,.28); }}
+    50% {{ box-shadow: 0 0 0 8px rgba(255,255,255,0), 0 8px 24px rgba(0,0,0,.34); }}
+}}
+@keyframes guardrailBreathe {{
+    0%, 100% {{ box-shadow: 0 0 0 rgba(96,165,250,0); }}
+    50% {{ box-shadow: 0 0 25px rgba(96,165,250,.10); }}
+}}
+@keyframes tileReveal {{
+    from {{ opacity: 0; transform: translateY(13px) scale(.985); }}
+    to {{ opacity: 1; transform: translateY(0) scale(1); }}
+}}
 
 @media (max-width: 960px) {{
     .app-header {{ align-items: flex-start; flex-direction: column; }}
