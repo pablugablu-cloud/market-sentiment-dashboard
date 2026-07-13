@@ -1,4 +1,3 @@
-
 import os
 import math
 import time
@@ -1563,6 +1562,79 @@ div[data-testid="stButton"] button:hover {{
     max-width: none;
 }}
 
+/* ============================================================
+   Mag 7 + S&P 500 sector performance
+   ============================================================ */
+.performance-shell {{
+    background: linear-gradient(180deg, {t["surface"]}, {t["surface2"]});
+    border: 1px solid {t["border"]};
+    border-radius: 28px;
+    box-shadow: {t["shadow2"]};
+    padding: 22px 24px 8px;
+    margin-bottom: 14px;
+}}
+
+.performance-kicker {{
+    color: {t["muted"]};
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+}}
+
+.performance-title {{
+    color: {t["text"]};
+    font-size: 25px;
+    font-weight: 950;
+    letter-spacing: -.55px;
+    margin-top: 6px;
+}}
+
+.performance-copy {{
+    color: {t["muted"]};
+    font-size: 14px;
+    line-height: 1.45;
+    margin: 8px 0 8px;
+}}
+
+.performance-stat-grid {{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 8px 0 14px;
+}}
+
+.performance-stat {{
+    background: {t["surface"]};
+    border: 1px solid {t["border"]};
+    border-radius: 17px;
+    padding: 12px 13px;
+}}
+
+.performance-stat-label {{
+    color: {t["muted"]};
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .55px;
+}}
+
+.performance-stat-value {{
+    color: {t["text"]};
+    font-size: 16px;
+    font-weight: 950;
+    margin-top: 5px;
+}}
+
+div[role="radiogroup"] {{
+    gap: 6px;
+    flex-wrap: wrap;
+}}
+
+@media (max-width: 720px) {{
+    .performance-stat-grid {{ grid-template-columns: 1fr; }}
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1870,6 +1942,275 @@ def fetch_news():
         return s, "Bullish" if s > 60 else "Bearish" if s < 40 else "Mixed"
     except Exception:
         return None, "Unavailable"
+
+
+
+# ============================================================
+# Mag 7 + S&P 500 Sector Performance
+# ============================================================
+MAG7 = {
+    "Apple": "AAPL",
+    "Microsoft": "MSFT",
+    "Alphabet": "GOOGL",
+    "Amazon": "AMZN",
+    "Nvidia": "NVDA",
+    "Meta": "META",
+    "Tesla": "TSLA",
+}
+
+SP500_SECTORS = {
+    "Communication Services": "XLC",
+    "Consumer Discretionary": "XLY",
+    "Consumer Staples": "XLP",
+    "Energy": "XLE",
+    "Financials": "XLF",
+    "Health Care": "XLV",
+    "Industrials": "XLI",
+    "Materials": "XLB",
+    "Real Estate": "XLRE",
+    "Technology": "XLK",
+    "Utilities": "XLU",
+}
+
+RETURN_PERIODS = ("1D", "1M", "3M", "6M", "YTD", "1Y")
+
+
+@st.cache_data(ttl=900, show_spinner=False)
+def fetch_performance_prices(tickers):
+    """Fetch adjusted daily closes once for every performance section."""
+    tickers = list(dict.fromkeys(tickers))
+    try:
+        raw = yf.download(
+            tickers=tickers,
+            period="2y",
+            interval="1d",
+            auto_adjust=True,
+            progress=False,
+            threads=True,
+            group_by="column",
+        )
+    except Exception:
+        return pd.DataFrame()
+
+    if raw is None or raw.empty:
+        return pd.DataFrame()
+
+    if isinstance(raw.columns, pd.MultiIndex):
+        level_zero = raw.columns.get_level_values(0)
+        level_one = raw.columns.get_level_values(1)
+        if "Close" in level_zero:
+            close = raw["Close"].copy()
+        elif "Close" in level_one:
+            close = raw.xs("Close", level=1, axis=1).copy()
+        else:
+            return pd.DataFrame()
+    else:
+        if "Close" not in raw.columns:
+            return pd.DataFrame()
+        close = raw[["Close"]].copy()
+        close.columns = [tickers[0]]
+
+    if isinstance(close, pd.Series):
+        close = close.to_frame(name=tickers[0])
+
+    close.index = pd.to_datetime(close.index)
+    if getattr(close.index, "tz", None) is not None:
+        close.index = close.index.tz_localize(None)
+
+    close = close.sort_index()
+    close = close.loc[:, ~close.columns.duplicated()]
+    return close.dropna(how="all")
+
+
+def period_start_date(latest_date, period):
+    latest_date = pd.Timestamp(latest_date).normalize()
+    if period == "1M":
+        return latest_date - pd.DateOffset(months=1)
+    if period == "3M":
+        return latest_date - pd.DateOffset(months=3)
+    if period == "6M":
+        return latest_date - pd.DateOffset(months=6)
+    if period == "YTD":
+        return pd.Timestamp(year=latest_date.year, month=1, day=1)
+    if period == "1Y":
+        return latest_date - pd.DateOffset(years=1)
+    return latest_date
+
+
+def calculate_period_return(series, period):
+    """Return percentage change using the latest available adjusted close."""
+    series = pd.to_numeric(series, errors="coerce").dropna().sort_index()
+    if len(series) < 2:
+        return None
+
+    latest_value = safe_float(series.iloc[-1])
+    if latest_value is None:
+        return None
+
+    if period == "1D":
+        base_value = safe_float(series.iloc[-2])
+    else:
+        start_date = period_start_date(series.index[-1], period)
+        prior_rows = series.loc[series.index <= start_date]
+        if not prior_rows.empty:
+            base_value = safe_float(prior_rows.iloc[-1])
+        else:
+            later_rows = series.loc[series.index >= start_date]
+            base_value = safe_float(later_rows.iloc[0]) if not later_rows.empty else None
+
+    if base_value in (None, 0):
+        return None
+    return ((latest_value / base_value) - 1) * 100
+
+
+def build_return_table(prices, assets):
+    rows = []
+    for name, ticker in assets.items():
+        if ticker not in prices.columns:
+            continue
+        row = {"Name": name, "Ticker": ticker}
+        for period in RETURN_PERIODS:
+            row[period] = calculate_period_return(prices[ticker], period)
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def make_return_chart(return_table, period, title, theme, benchmark_return=None):
+    if return_table is None or return_table.empty or period not in return_table.columns:
+        return None
+
+    chart_df = return_table[["Name", "Ticker", period]].dropna().copy()
+    if chart_df.empty:
+        return None
+
+    chart_df["Label"] = chart_df["Name"] + "  ·  " + chart_df["Ticker"]
+    chart_df = chart_df.sort_values(period, ascending=True)
+    colors = [theme["green"] if value >= 0 else theme["red"] for value in chart_df[period]]
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=chart_df[period],
+        y=chart_df["Label"],
+        orientation="h",
+        marker={"color": colors, "line": {"width": 0}},
+        text=[f"{value:+.2f}%" for value in chart_df[period]],
+        textposition="outside",
+        cliponaxis=False,
+        hovertemplate="<b>%{y}</b><br>Return: %{x:+.2f}%<extra></extra>",
+        name=period,
+    ))
+
+    if benchmark_return is not None:
+        fig.add_vline(
+            x=benchmark_return,
+            line_width=1.5,
+            line_dash="dot",
+            line_color=theme["muted"],
+            annotation_text=f"S&P 500 {benchmark_return:+.2f}%",
+            annotation_position="top",
+            annotation_font_color=theme["muted"],
+        )
+
+    fig.add_vline(x=0, line_width=1, line_color=theme["border2"])
+    fig.update_layout(
+        title={"text": title, "x": 0.01, "xanchor": "left"},
+        height=max(390, 62 * len(chart_df)),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font={"color": theme["text"], "family": "Inter"},
+        margin=dict(l=10, r=82, t=58, b=22),
+        showlegend=False,
+        bargap=0.28,
+        hoverlabel={"bgcolor": theme["surface"], "font_color": theme["text"]},
+        xaxis={
+            "title": "Return (%)",
+            "ticksuffix": "%",
+            "gridcolor": theme["border"],
+            "zeroline": False,
+        },
+        yaxis={"title": None, "automargin": True},
+    )
+    return fig
+
+
+def performance_summary(return_table, period):
+    required = {"Name", "Ticker", period}
+    if return_table is None or return_table.empty or not required.issubset(return_table.columns):
+        return None
+    usable = return_table[["Name", "Ticker", period]].dropna().copy()
+    if usable.empty:
+        return None
+    leader = usable.loc[usable[period].idxmax()]
+    laggard = usable.loc[usable[period].idxmin()]
+    positive_count = int((usable[period] > 0).sum())
+    return {
+        "leader": f'{leader["Ticker"]} {leader[period]:+.2f}%',
+        "laggard": f'{laggard["Ticker"]} {laggard[period]:+.2f}%',
+        "breadth": f"{positive_count} of {len(usable)} positive",
+    }
+
+
+def render_performance_section(title, kicker, copy, assets, prices, period_key, theme, benchmark_prices=None):
+    st.markdown(f"""
+<div class="performance-shell">
+  <div class="performance-kicker">{kicker}</div>
+  <div class="performance-title">{title}</div>
+  <div class="performance-copy">{copy}</div>
+</div>
+""", unsafe_allow_html=True)
+
+    selected_period = st.radio(
+        f"{title} period",
+        RETURN_PERIODS,
+        horizontal=True,
+        key=period_key,
+        label_visibility="collapsed",
+    )
+
+    return_table = build_return_table(prices, assets)
+    benchmark_return = None
+    if benchmark_prices is not None and "SPY" in benchmark_prices.columns:
+        benchmark_return = calculate_period_return(benchmark_prices["SPY"], selected_period)
+
+    summary = performance_summary(return_table, selected_period)
+    if summary:
+        st.markdown(f"""
+<div class="performance-stat-grid">
+  <div class="performance-stat">
+    <div class="performance-stat-label">Leader</div>
+    <div class="performance-stat-value">{summary["leader"]}</div>
+  </div>
+  <div class="performance-stat">
+    <div class="performance-stat-label">Laggard</div>
+    <div class="performance-stat-value">{summary["laggard"]}</div>
+  </div>
+  <div class="performance-stat">
+    <div class="performance-stat-label">Breadth</div>
+    <div class="performance-stat-value">{summary["breadth"]}</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    fig = make_return_chart(
+        return_table,
+        selected_period,
+        f"{title} · {selected_period} adjusted return",
+        theme,
+        benchmark_return=benchmark_return,
+    )
+    if fig is None:
+        st.warning(f"{title} performance data is unavailable right now.")
+        return
+
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    with st.expander("View all six return periods"):
+        display_df = return_table.copy()
+        for period in RETURN_PERIODS:
+            display_df[period] = display_df[period].apply(
+                lambda value: "N/A" if pd.isna(value) else f"{float(value):+.2f}%"
+            )
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
 
 
 # ============================================================
@@ -2340,6 +2681,44 @@ st.markdown('<div class="section">All Signals</div>', unsafe_allow_html=True)
 st.markdown('<div class="section-sub">Readable signal rows. No black-box table required.</div>', unsafe_allow_html=True)
 for _, row in signal_df.drop(columns=["_severity"]).iterrows():
     signal_row(row["Signal"], row["Current Read"], row["What it says"], row["What to do"])
+
+
+st.markdown('<div class="section">Market Performance</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="section-sub">Compare recent leadership across the Magnificent 7 and every major S&P 500 sector. Returns use adjusted prices and the latest available trading close.</div>',
+    unsafe_allow_html=True,
+)
+
+performance_tickers = tuple(
+    list(MAG7.values()) + list(SP500_SECTORS.values()) + ["SPY"]
+)
+with st.spinner("Loading Mag 7 and sector returns..."):
+    performance_prices = fetch_performance_prices(performance_tickers)
+
+if performance_prices.empty:
+    st.warning("Mag 7 and sector performance data is unavailable right now. Refresh in a few minutes.")
+else:
+    render_performance_section(
+        title="Magnificent 7",
+        kicker="Mega-cap leadership",
+        copy="See which of the seven largest technology-driven market leaders are leading or lagging over the selected period.",
+        assets=MAG7,
+        prices=performance_prices,
+        period_key="mag7_return_period",
+        theme=t,
+        benchmark_prices=performance_prices,
+    )
+
+    render_performance_section(
+        title="S&P 500 Sectors",
+        kicker="Market breadth",
+        copy="Compare all 11 Select Sector SPDR ETFs to see where S&P 500 strength and weakness are concentrated.",
+        assets=SP500_SECTORS,
+        prices=performance_prices,
+        period_key="sector_return_period",
+        theme=t,
+        benchmark_prices=performance_prices,
+    )
 
 
 st.markdown('<div class="section">Advanced View</div>', unsafe_allow_html=True)
