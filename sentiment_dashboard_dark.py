@@ -633,51 +633,156 @@ def calculate_period_return(series, period):
 # ============================================================
 # Data acquisition
 # ============================================================
-@st.cache_data(ttl=900, show_spinner=False)
-def fetch_market_prices(tickers):
-    """Fetch adjusted daily closes. yfinance is convenient, but delayed/unofficial."""
-    try:
-        raw = yf.download(
-            tickers=list(tickers),
-            period="2y",
-            interval="1d",
-            auto_adjust=True,
-            repair=True,
-            progress=False,
-            threads=True,
-            group_by="column",
-            timeout=15,
-        )
-    except Exception:
-        return pd.DataFrame()
+def _clean_price_series(series):
+    """Normalize one Yahoo price series into a timezone-naive daily series."""
+    if series is None:
+        return pd.Series(dtype="float64")
+    clean = pd.to_numeric(series, errors="coerce").dropna().copy()
+    if clean.empty:
+        return clean
+    clean.index = pd.to_datetime(clean.index, errors="coerce")
+    clean = clean[~clean.index.isna()]
+    if getattr(clean.index, "tz", None) is not None:
+        clean.index = clean.index.tz_localize(None)
+    clean = clean[~clean.index.duplicated(keep="last")].sort_index()
+    return clean
 
+
+def _extract_close_frame(raw, requested_tickers):
+    """Handle the different column layouts returned by yfinance versions."""
     if raw is None or raw.empty:
         return pd.DataFrame()
 
+    requested = list(requested_tickers)
+    close = None
+
     if isinstance(raw.columns, pd.MultiIndex):
-        level0 = raw.columns.get_level_values(0)
-        level1 = raw.columns.get_level_values(1)
-        if "Close" in level0:
-            close = raw["Close"].copy()
-        elif "Close" in level1:
-            close = raw.xs("Close", level=1, axis=1).copy()
-        else:
+        for level in range(raw.columns.nlevels):
+            values = raw.columns.get_level_values(level).astype(str)
+            if "Close" in set(values):
+                close = raw.xs("Close", axis=1, level=level, drop_level=True).copy()
+                break
+        if close is None:
             return pd.DataFrame()
     else:
         if "Close" not in raw.columns:
             return pd.DataFrame()
         close = raw[["Close"]].copy()
-        close.columns = [list(tickers)[0]]
+        if len(requested) == 1:
+            close.columns = [requested[0]]
 
     if isinstance(close, pd.Series):
-        close = close.to_frame(name=list(tickers)[0])
+        name = requested[0] if requested else str(close.name)
+        close = close.to_frame(name=name)
 
-    close.index = pd.to_datetime(close.index)
+    if isinstance(close.columns, pd.MultiIndex):
+        flattened = []
+        for column in close.columns:
+            parts = [str(part) for part in column]
+            match = next((ticker for ticker in requested if ticker in parts), parts[-1])
+            flattened.append(match)
+        close.columns = flattened
+    else:
+        close.columns = [str(column) for column in close.columns]
+
+    # yfinance can occasionally reverse or alter column order; keep only requested names.
+    aliases = {ticker.upper(): ticker for ticker in requested}
+    renamed = {}
+    for column in close.columns:
+        normalized = str(column).upper()
+        if normalized in aliases:
+            renamed[column] = aliases[normalized]
+    close = close.rename(columns=renamed)
+    close = close.loc[:, [column for column in close.columns if column in requested]]
+
+    close.index = pd.to_datetime(close.index, errors="coerce")
+    close = close[~close.index.isna()]
     if getattr(close.index, "tz", None) is not None:
         close.index = close.index.tz_localize(None)
-    close = close.sort_index()
-    close = close.loc[:, ~close.columns.duplicated()]
+    close = close.loc[:, ~close.columns.duplicated(keep="last")].sort_index()
     return close.dropna(how="all")
+
+
+def _download_bulk_prices(tickers, period="2y"):
+    """Minimal-argument bulk request for compatibility across yfinance releases."""
+    tickers = list(dict.fromkeys(tickers))
+    if not tickers:
+        return pd.DataFrame()
+    try:
+        raw = yf.download(
+            tickers=" ".join(tickers),
+            period=period,
+            interval="1d",
+            auto_adjust=True,
+            progress=False,
+            threads=False,
+        )
+        return _extract_close_frame(raw, tickers)
+    except Exception:
+        return pd.DataFrame()
+
+
+def _download_single_price(ticker, period="2y"):
+    """Independent fallback so one Yahoo failure cannot blank the whole app."""
+    try:
+        history = yf.Ticker(ticker).history(
+            period=period,
+            interval="1d",
+            auto_adjust=True,
+            actions=False,
+        )
+        if history is None or history.empty or "Close" not in history.columns:
+            return pd.Series(dtype="float64", name=ticker)
+        series = _clean_price_series(history["Close"])
+        series.name = ticker
+        return series
+    except Exception:
+        return pd.Series(dtype="float64", name=ticker)
+
+
+@st.cache_data(ttl=900, show_spinner=False)
+def fetch_market_prices(tickers):
+    """
+    Fetch adjusted daily closes with graceful fallbacks.
+
+    The old implementation used one all-or-nothing Yahoo request. Any exception —
+    including a version-specific keyword or one failed symbol — returned an empty
+    frame and stopped the app. Critical index series are now fetched independently,
+    while ordinary stocks and ETFs use a smaller bulk request.
+    """
+    requested = list(dict.fromkeys(tickers))
+    frames = []
+
+    # These series power the score, so do not make them depend on a 20+ ticker batch.
+    for ticker in ("^GSPC", "SPY", "^VIX"):
+        if ticker in requested:
+            series = _download_single_price(ticker)
+            if not series.empty:
+                frames.append(series.to_frame())
+
+    # Stocks and ETFs are more reliable in a batch than when mixed with index symbols.
+    ordinary = [ticker for ticker in requested if ticker not in {"^GSPC", "^VIX", "SPY"}]
+    bulk = _download_bulk_prices(ordinary)
+    if not bulk.empty:
+        frames.append(bulk)
+
+    # Fill any missing ordinary symbols individually. Partial data is better than a blank page.
+    loaded = set()
+    for frame in frames:
+        loaded.update(frame.columns)
+    for ticker in ordinary:
+        if ticker not in loaded:
+            series = _download_single_price(ticker)
+            if not series.empty:
+                frames.append(series.to_frame())
+
+    if not frames:
+        return pd.DataFrame()
+
+    prices = pd.concat(frames, axis=1).sort_index()
+    prices = prices.loc[:, ~prices.columns.duplicated(keep="last")]
+    prices = prices[[ticker for ticker in requested if ticker in prices.columns]]
+    return prices.dropna(how="all")
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
@@ -730,11 +835,23 @@ def fetch_treasury_curve():
 # Market model
 # ============================================================
 def build_technical_snapshot(prices):
-    if prices.empty or "^GSPC" not in prices.columns:
+    """Build the score from the S&P 500 index, falling back to SPY when needed."""
+    if prices.empty:
         return None
 
-    spx = pd.to_numeric(prices["^GSPC"], errors="coerce").dropna()
-    if len(spx) < 210:
+    source_ticker = None
+    source_label = None
+    for ticker, label in (("^GSPC", "S&P 500 Index"), ("SPY", "SPY ETF proxy")):
+        if ticker not in prices.columns:
+            continue
+        candidate = pd.to_numeric(prices[ticker], errors="coerce").dropna()
+        if len(candidate) >= 210:
+            source_ticker = ticker
+            source_label = label
+            spx = candidate
+            break
+
+    if source_ticker is None:
         return None
 
     rsi = RSIIndicator(spx, window=14).rsi()
@@ -755,6 +872,8 @@ def build_technical_snapshot(prices):
         "vix": vix,
         "latest_date": pd.Timestamp(spx.index[-1]),
         "history": pd.DataFrame({"Close": spx, "SMA 200": sma200}).reset_index(names="Date"),
+        "source_ticker": source_ticker,
+        "source_label": source_label,
     }
 
 
@@ -1128,7 +1247,22 @@ with st.spinner("Loading the latest available market data..."):
 
 technical = build_technical_snapshot(market_prices)
 if technical is None:
-    st.error("S&P 500 market history is unavailable. Refresh in a few minutes.")
+    loaded_symbols = [ticker for ticker in ALL_MARKET_TICKERS if ticker in market_prices.columns]
+    st.markdown(
+        """
+<div class="app-header">
+  <div>
+    <div class="app-title">📈 Should I Buy Today?</div>
+    <div class="app-subtitle">Market data could not be loaded reliably, so the app is withholding a buy-sizing signal.</div>
+  </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+    st.error("The S&P 500 index and SPY fallback are both unavailable. Yahoo may be rate-limiting this deployment.")
+    if loaded_symbols:
+        st.caption(f"Other symbols loaded: {', '.join(loaded_symbols)}")
+    st.info("Wait a minute and press Refresh. The app now retries critical symbols independently, so a temporary failure should no longer blank the full dashboard on the next successful request.")
     st.stop()
 
 score, signal_frame = build_heat_score(
@@ -1160,6 +1294,7 @@ st.markdown(
     <span class="meta-pill"><span class="status-dot"></span>Prices through {market_date_label}</span>
     <span class="meta-pill">Refreshed {refresh_label}</span>
     <span class="meta-pill">Core data {available_count}/4</span>
+    <span class="meta-pill">Signal source: {technical['source_label']}</span>
   </div>
 </div>
 """,
@@ -1314,7 +1449,7 @@ with st.expander("Open methodology, all signals and advanced charts"):
         """
 **How to read the score**
 
-The Market Heat Score is a transparent rule-based index, not a forecast of tomorrow’s return. It uses four core inputs: VIX (30%), S&P 500 RSI (25%), distance from the 200-day average (25%), and the Cboe equity put/call ratio (20%). Higher means more stretched; lower means more fearful.
+The Market Heat Score is a transparent rule-based index, not a forecast of tomorrow’s return. It uses four core inputs: VIX (30%), broad-market RSI (25%), distance from the 200-day average (25%), and the Cboe equity put/call ratio (20%). The S&P 500 index is preferred; SPY is used only as a transparent fallback when the index feed is unavailable. Higher means more stretched; lower means more fearful.
 
 When a core input is unavailable, the model uses a neutral value of 50 and lowers confidence. It does **not** silently redistribute the missing weight, which keeps the score comparable across days.
 """
@@ -1336,7 +1471,7 @@ When a core input is unavailable, the model uses a neutral value of 50 and lower
     with trend_tab:
         history = technical["history"]
         figure = go.Figure()
-        figure.add_trace(go.Scatter(x=history["Date"], y=history["Close"], mode="lines", name="S&P 500"))
+        figure.add_trace(go.Scatter(x=history["Date"], y=history["Close"], mode="lines", name=technical["source_label"]))
         figure.add_trace(go.Scatter(x=history["Date"], y=history["SMA 200"], mode="lines", name="200-day average"))
         figure.update_layout(
             height=400,
@@ -1386,7 +1521,7 @@ When a core input is unavailable, the model uses a neutral value of 50 and lower
     with sources_tab:
         st.markdown(
             """
-- **Prices and adjusted returns:** Yahoo Finance through the open-source `yfinance` package. Data may be delayed and is intended here for educational use.
+- **Prices and adjusted returns:** Yahoo Finance through the open-source `yfinance` package. Critical index series are fetched independently, and SPY is a disclosed fallback for the technical signal. Data may be delayed and is intended here for educational use.
 - **Equity put/call ratio:** Cboe Daily Market Statistics.
 - **Treasury curve:** U.S. Department of the Treasury daily par yield curve.
 - **Sector view:** the 11 Select Sector SPDR ETFs are investable proxies for S&P 500 sectors. Their adjusted returns are not identical to raw sector-index returns.
