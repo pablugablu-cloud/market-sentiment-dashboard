@@ -1,14 +1,13 @@
 """
-Should I Buy Today? — a market weather report for long-term index investors.
+Should I Buy Today? — an immersive market weather report for long-term index investors.
 
-Product principles
--------------------
+Design principles
+-----------------
 1. One plain-English answer first. Everything else is optional depth.
 2. Weather language everywhere: Cold / Cool / Mild / Warm / Hot.
-   Beginners understand weather; nobody needs to know what RSI is to act.
-3. Progressive disclosure: Answer -> Why -> Explore -> Audit.
-4. The score model, data fallbacks and disclaimers are unchanged from the
-   audited version; this redesign is presentation and pedagogy only.
+3. Progressive disclosure: Signal -> Evidence -> Explore -> Audit.
+4. The audited score model, data fallbacks, and disclaimers remain unchanged.
+5. The presentation is intentionally bold, kinetic, and digital-first.
 """
 
 import html as html_lib
@@ -31,7 +30,7 @@ from ta.trend import SMAIndicator
 # ============================================================
 st.set_page_config(
     page_title="Should I Buy Today?",
-    page_icon="🌤️",
+    page_icon="◉",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -39,622 +38,508 @@ st.set_page_config(
 PACIFIC = ZoneInfo("America/Los_Angeles")
 NOW_PT = datetime.now(PACIFIC)
 
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = True
-
-
 # ============================================================
-# Theme — "field almanac": warm paper by day, ink navy by night
+# Visual system — kinetic, high-contrast, digital-first
 # ============================================================
-LIGHT = {
-    "bg": "#F6F4EF",
-    "surface": "#FFFFFF",
-    "surface2": "#FBFAF7",
-    "text": "#1B2432",
-    "muted": "#5F6B7A",
-    "muted2": "#8B95A3",
-    "border": "rgba(27,36,50,.10)",
-    "border2": "rgba(27,36,50,.18)",
-    "shadow": "0 14px 40px rgba(27,36,50,.07)",
-    "green": "#1E7A55",
-    "green_bg": "rgba(30,122,85,.09)",
-    "amber": "#A96A0B",
-    "amber_bg": "rgba(169,106,11,.09)",
-    "coral": "#C24657",
-    "coral_bg": "rgba(194,70,87,.08)",
-    "blue": "#2F5FA8",
-    "blue_bg": "rgba(47,95,168,.08)",
-    "meter_green": "#7FBFA2",
-    "meter_amber": "#E4C27E",
-    "meter_coral": "#DE9AA3",
-    "pulse": "rgba(27,36,50,.30)",
-}
-
-DARK = {
-    "bg": "#0E1522",
-    "surface": "#16202F",
-    "surface2": "#121A28",
-    "text": "#F1EFE9",
-    "muted": "#9AA5B4",
-    "muted2": "#6E7989",
-    "border": "rgba(241,239,233,.10)",
-    "border2": "rgba(241,239,233,.20)",
-    "shadow": "0 18px 52px rgba(0,0,0,.35)",
-    "green": "#4CBE90",
-    "green_bg": "rgba(76,190,144,.11)",
-    "amber": "#E5AC45",
-    "amber_bg": "rgba(229,172,69,.11)",
-    "coral": "#EF7E8C",
-    "coral_bg": "rgba(239,126,140,.10)",
-    "blue": "#7CA6E8",
-    "blue_bg": "rgba(124,166,232,.10)",
-    "meter_green": "#2E6B51",
-    "meter_amber": "#8A6A2A",
-    "meter_coral": "#7E4550",
-    "pulse": "rgba(241,239,233,.32)",
+THEME = {
+    "bg": "#07070A",
+    "surface": "#101015",
+    "surface2": "#15151C",
+    "surface3": "#1C1C25",
+    "text": "#F7F7F2",
+    "muted": "#A5A5B4",
+    "muted2": "#717180",
+    "border": "rgba(255,255,255,.10)",
+    "border2": "rgba(255,255,255,.20)",
+    "grid": "rgba(255,255,255,.035)",
+    "lime": "#D7FF45",
+    "green": "#52F6A8",
+    "green_bg": "rgba(82,246,168,.12)",
+    "violet": "#A982FF",
+    "violet_bg": "rgba(169,130,255,.14)",
+    "cyan": "#45E7FF",
+    "cyan_bg": "rgba(69,231,255,.12)",
+    "amber": "#FFB347",
+    "amber_bg": "rgba(255,179,71,.12)",
+    "coral": "#FF6B7A",
+    "coral_bg": "rgba(255,107,122,.12)",
+    "pink": "#FF5CD6",
+    "blue": "#6D8CFF",
+    "shadow": "0 28px 90px rgba(0,0,0,.42)",
 }
 
 
 def current_theme():
-    return DARK if st.session_state.dark_mode else LIGHT
+    return THEME
 
 
 def inject_css(t):
     st.markdown(
         f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,550;0,9..144,650;1,9..144,450&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@450;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-:root {{ color-scheme: {'dark' if st.session_state.dark_mode else 'light'}; }}
-
+:root {{ color-scheme: dark; }}
+* {{ box-sizing: border-box; }}
+html {{ scroll-behavior: smooth; }}
 html, body, [class*="css"], .stApp, .stMarkdown, p, span, div, label {{
-    font-family: "Instrument Sans", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+    font-family: "DM Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }}
-
-.serif {{ font-family: "Fraunces", Georgia, serif; }}
-.mono  {{ font-family: "IBM Plex Mono", ui-monospace, monospace; }}
-
+body {{ background: {t['bg']}; }}
 .stApp {{
     color: {t['text']};
-    background: {t['bg']};
+    background:
+        radial-gradient(circle at 18% -10%, rgba(169,130,255,.14), transparent 30%),
+        radial-gradient(circle at 92% 10%, rgba(69,231,255,.08), transparent 25%),
+        {t['bg']};
 }}
-
 [data-testid="stHeader"] {{ background: transparent; }}
-[data-testid="stToolbar"], [data-testid="stDecoration"] {{ display: none; }}
+[data-testid="stToolbar"], [data-testid="stDecoration"], #MainMenu, footer {{ display: none; }}
+.block-container {{ max-width: 1320px; padding: 1.15rem 2.1rem 5rem; }}
 
-.block-container {{
-    max-width: 1180px;
-    padding-top: 1.0rem;
-    padding-bottom: 3rem;
-}}
-
-/* ---------- Controls ---------- */
+/* Streamlit controls */
 div[data-testid="stButton"] button {{
-    height: 38px;
-    border: 1px solid {t['border']};
-    border-radius: 10px;
-    background: {t['surface']};
+    min-height: 42px;
+    border: 1px solid {t['border2']};
+    border-radius: 999px;
+    background: rgba(255,255,255,.055);
     color: {t['text']};
+    font-family: "Space Grotesk", sans-serif;
     font-weight: 600;
+    letter-spacing: -.01em;
     box-shadow: none;
-    transition: border-color .18s ease, transform .18s ease;
+    backdrop-filter: blur(16px);
+    transition: transform .2s ease, border-color .2s ease, background .2s ease;
 }}
 div[data-testid="stButton"] button:hover {{
-    border-color: {t['border2']};
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    border-color: {t['lime']};
+    background: rgba(215,255,69,.08);
+    color: {t['lime']};
 }}
-div[data-testid="stButton"] button:focus-visible {{
-    outline: 2px solid {t['blue']};
-    outline-offset: 2px;
-}}
+div[data-testid="stButton"] button:focus-visible {{ outline: 2px solid {t['lime']}; outline-offset: 3px; }}
 
 .stTabs [data-baseweb="tab-list"] {{
-    gap: 6px;
-    border-bottom: 1px solid {t['border']};
-    padding-bottom: 8px;
+    gap: 8px;
+    padding: 6px;
+    border: 1px solid {t['border']};
+    border-radius: 999px;
+    background: rgba(255,255,255,.035);
+    width: fit-content;
 }}
 .stTabs [data-baseweb="tab"] {{
-    height: 40px;
-    border-radius: 9px;
-    padding: 0 14px;
+    height: 42px;
+    border-radius: 999px;
+    padding: 0 18px;
     color: {t['muted']};
+    font-family: "Space Grotesk", sans-serif;
     font-weight: 600;
 }}
 .stTabs [aria-selected="true"] {{
-    color: {t['text']} !important;
-    background: {t['surface']} !important;
-    border: 1px solid {t['border']} !important;
+    color: #07070A !important;
+    background: {t['lime']} !important;
 }}
+.stTabs [data-baseweb="tab-border"] {{ display: none; }}
 
-div[role="radiogroup"] {{ gap: 5px; flex-wrap: wrap; }}
+div[role="radiogroup"] {{ gap: 7px; flex-wrap: wrap; margin: 12px 0 18px; }}
 div[role="radiogroup"] label {{
     border: 1px solid {t['border']};
     border-radius: 999px;
-    background: {t['surface']};
-    padding: 3px 10px;
+    background: rgba(255,255,255,.035);
+    padding: 5px 11px;
+    transition: border-color .18s ease, background .18s ease, transform .18s ease;
 }}
-
-[data-testid="stExpander"] {{
-    border: 1px solid {t['border']};
-    border-radius: 14px;
-    background: {t['surface']};
-}}
-
-/* ---------- Masthead ---------- */
-.masthead {{
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 24px;
-    padding: 10px 2px 6px;
-    border-bottom: 2px solid {t['text']};
-    margin-bottom: 8px;
-}}
-.wordmark {{
-    font-family: "Fraunces", Georgia, serif;
-    font-size: clamp(26px, 3.4vw, 38px);
-    font-weight: 650;
-    letter-spacing: -0.6px;
-    line-height: 1.05;
-    color: {t['text']};
-}}
-.wordmark em {{ font-style: italic; font-weight: 450; }}
-.masthead-sub {{
-    color: {t['muted']};
-    font-size: 13.5px;
-    margin-top: 5px;
-}}
-.freshness {{
-    display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px;
-    padding-bottom: 2px;
-}}
-.meta-pill {{
-    display: inline-flex; align-items: center; gap: 6px;
-    color: {t['muted']};
-    background: {t['surface']};
-    border: 1px solid {t['border']};
-    border-radius: 999px;
-    padding: 5px 10px;
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 10.5px;
-    white-space: nowrap;
-    animation: fadeUp .45s cubic-bezier(.2,.8,.2,1) both;
-}}
-.freshness .meta-pill:nth-child(1) {{ animation-delay: .05s; }}
-.freshness .meta-pill:nth-child(2) {{ animation-delay: .13s; }}
-.freshness .meta-pill:nth-child(3) {{ animation-delay: .21s; }}
-.freshness .meta-pill:nth-child(4) {{ animation-delay: .29s; }}
-.status-dot {{ width: 6px; height: 6px; border-radius: 999px; background: {t['green']}; animation: dotBlink 3.2s ease-in-out 1s 3; }}
-
-/* ---------- Hero: today's report ---------- */
-.report-card {{
-    background: {t['surface']};
-    border: 1px solid {t['border']};
-    border-radius: 20px;
-    box-shadow: {t['shadow']};
-    padding: 34px 36px 30px;
-    margin-top: 16px;
-    animation: reportIn .6s cubic-bezier(.2,.8,.2,1) both;
-}}
-.report-grid {{
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(300px, .95fr);
-    gap: 44px;
-    align-items: start;
-}}
-.eyebrow {{
-    color: {t['muted']};
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1.4px;
-}}
-.verdict {{
-    font-family: "Fraunces", Georgia, serif;
-    font-size: clamp(34px, 4.6vw, 56px);
-    font-weight: 550;
-    line-height: 1.06;
-    letter-spacing: -1.2px;
-    color: {t['text']};
-    margin-top: 12px;
-}}
-.verdict .w {{
-    display: inline-block;
-    animation: wordRise .62s cubic-bezier(.2,.85,.25,1) both;
-}}
-.verdict .accent {{ font-style: italic; }}
-.verdict-copy {{
-    color: {t['muted']};
-    font-size: 16.5px;
-    line-height: 1.55;
-    margin-top: 14px;
-    max-width: 560px;
-    animation: fadeUp .55s cubic-bezier(.2,.8,.2,1) .16s both;
-}}
-.guardrail {{
-    display: inline-flex; align-items: center; gap: 8px;
-    margin-top: 18px;
-    padding: 9px 12px;
-    color: {t['blue']};
-    background: {t['blue_bg']};
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    animation: fadeUp .55s cubic-bezier(.2,.8,.2,1) .24s both;
-}}
-
-/* ---------- Thermometer panel ---------- */
-.thermo-panel {{
-    position: relative;
-    overflow: hidden;
-    border: 1px solid {t['border']};
-    border-radius: 16px;
-    background: {t['surface2']};
-    padding: 22px 22px 18px;
-    animation: fadeUp .55s cubic-bezier(.2,.8,.2,1) .14s both;
-}}
-.thermo-panel::before {{
-    content: "";
-    position: absolute;
-    width: 280px; height: 280px;
-    right: -100px; top: -120px;
-    border-radius: 999px;
-    background: radial-gradient(circle at 50% 50%, var(--glow, transparent), transparent 66%);
-    pointer-events: none;
-    animation: glowDrift 9s ease-in-out infinite;
-}}
-.thermo-panel > * {{ position: relative; z-index: 1; }}
-.thermo-head {{
-    display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
-}}
-.weather-word {{
-    font-family: "Fraunces", Georgia, serif;
-    font-size: 30px;
-    font-weight: 650;
-    color: {t['text']};
-    line-height: 1;
-}}
-.weather-word small {{
-    display: block;
-    font-family: "Instrument Sans", sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: {t['muted']};
-    letter-spacing: .2px;
-    margin-bottom: 7px;
-}}
-.score-reading {{
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 15px;
-    color: {t['muted']};
-    text-align: right;
-}}
-.score-reading b {{
-    display: block;
-    font-size: 34px;
-    font-weight: 600;
-    color: {t['text']};
-    line-height: 1;
-    animation: scorePop .7s cubic-bezier(.16,.9,.3,1.25) .40s both;
-}}
-.thermo-track {{
-    position: relative;
-    height: 12px;
-    margin-top: 24px;
-    border-radius: 999px;
-    background: linear-gradient(90deg,
-        {t['meter_green']} 0 35%,
-        {t['meter_amber']} 35% 65%,
-        {t['meter_coral']} 65% 100%);
-}}
-.thermo-track::after {{
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 999px;
-    background: linear-gradient(100deg, transparent 32%, rgba(255,255,255,.32) 50%, transparent 68%);
-    background-size: 250% 100%;
-    background-repeat: no-repeat;
-    pointer-events: none;
-    animation: trackSheen 1.1s ease-out .55s 1 both;
-}}
-.thermo-marker {{
-    --pos: 50%;
-    position: absolute;
-    z-index: 2;
-    top: 50%; left: var(--pos);
-    width: 18px; height: 18px;
-    transform: translate(-50%, -50%);
-    border-radius: 999px;
+div[role="radiogroup"] label:hover {{ transform: translateY(-1px); border-color: {t['border2']}; }}
+div[role="radiogroup"] label:has(input:checked) {{
     background: {t['text']};
-    border: 3.5px solid {t['surface']};
-    box-shadow: 0 3px 12px rgba(0,0,0,.25);
-    animation:
-        markerGlide .8s cubic-bezier(.2,.85,.25,1) .35s both,
-        markerLand 1.5s ease-out 1.25s 2;
+    color: #09090C;
+    border-color: {t['text']};
 }}
-.thermo-labels {{
-    display: flex; justify-content: space-between;
-    margin-top: 10px;
-    color: {t['muted']};
-    font-size: 11px;
-    font-weight: 600;
+[data-testid="stExpander"] {{
+    border: 1px solid {t['border']} !important;
+    border-radius: 20px !important;
+    background: rgba(255,255,255,.025) !important;
+    overflow: hidden;
 }}
-.thermo-labels span:first-child {{ color: {t['green']}; }}
-.thermo-labels span:last-child  {{ color: {t['coral']}; }}
-.thermo-meta {{
-    display: flex; justify-content: space-between;
-    margin-top: 16px;
-    color: {t['muted2']};
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 10.5px;
-}}
+[data-testid="stExpander"] summary {{ font-family: "Space Grotesk", sans-serif; font-weight: 600; }}
+[data-testid="stDataFrame"] {{ border: 1px solid {t['border']}; border-radius: 16px; overflow: hidden; }}
+[data-testid="stPlotlyChart"] {{ margin-top: 10px; padding: 12px; border: 1px solid {t['border']}; border-radius: 22px; background: rgba(255,255,255,.018); overflow: hidden; }}
 
-/* ---------- Plan tiles ---------- */
-.plan-grid {{
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    margin-top: 26px;
+/* Top rail */
+.top-rail {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 8px 2px 20px;
 }}
-.plan-tile {{
-    padding: 16px;
-    border-radius: 14px;
-    background: {t['surface2']};
+.brand {{ display: flex; align-items: center; gap: 11px; }}
+.brand-mark {{
+    width: 22px; height: 22px; border-radius: 50%;
+    background: conic-gradient(from 180deg, {t['lime']}, {t['cyan']}, {t['violet']}, {t['pink']}, {t['lime']});
+    box-shadow: 0 0 34px rgba(169,130,255,.4);
+    animation: spinSlow 12s linear infinite;
+}}
+.brand-name {{
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: -.02em;
+}}
+.brand-slash {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 11px; }}
+.top-status {{ display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }}
+.micro-pill {{
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 10px;
     border: 1px solid {t['border']};
-    transition: transform .2s ease, border-color .2s ease;
-    animation: fadeUp .5s cubic-bezier(.2,.8,.2,1) both;
-}}
-.plan-tile:nth-child(1) {{ animation-delay: .30s; }}
-.plan-tile:nth-child(2) {{ animation-delay: .38s; }}
-.plan-tile:nth-child(3) {{ animation-delay: .46s; }}
-.plan-tile:hover {{ transform: translateY(-3px); border-color: {t['border2']}; }}
-.plan-label {{
+    border-radius: 999px;
     color: {t['muted']};
+    background: rgba(255,255,255,.025);
     font-family: "IBM Plex Mono", monospace;
     font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    white-space: nowrap;
 }}
-.plan-value {{
-    color: {t['text']};
-    font-size: 16.5px;
-    line-height: 1.3;
-    font-weight: 700;
-    margin-top: 7px;
-}}
-.plan-help {{
-    color: {t['muted']};
-    font-size: 12px;
-    line-height: 1.4;
-    margin-top: 6px;
-}}
+.live-dot {{ width: 6px; height: 6px; border-radius: 50%; background: {t['green']}; box-shadow: 0 0 12px {t['green']}; animation: livePulse 2.2s ease-in-out infinite; }}
 
-/* ---------- Sections ---------- */
-.section-head {{ margin: 34px 0 14px; }}
-.section-kicker {{
-    color: {t['muted']};
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 10.5px;
-    text-transform: uppercase;
-    letter-spacing: 1.4px;
-}}
-.section-title {{
-    font-family: "Fraunces", Georgia, serif;
-    color: {t['text']};
-    font-size: 25px;
-    font-weight: 600;
-    letter-spacing: -.4px;
-    margin-top: 4px;
-}}
-.section-copy {{
-    color: {t['muted']};
-    font-size: 13.5px;
-    line-height: 1.5;
-    margin-top: 5px;
-    max-width: 720px;
-}}
-
-/* ---------- Driver cards ---------- */
-.driver-card {{
-    height: 100%;
-    background: {t['surface']};
+/* Hero */
+.hero {{
+    --weather-a: {t['violet']};
+    --weather-b: {t['cyan']};
+    position: relative;
+    min-height: 650px;
+    overflow: hidden;
+    isolation: isolate;
     border: 1px solid {t['border']};
-    border-radius: 14px;
-    padding: 16px;
-    transition: transform .2s ease, border-color .2s ease;
+    border-radius: 34px;
+    background:
+        linear-gradient(110deg, rgba(255,255,255,.04), transparent 38%),
+        #0B0B10;
+    box-shadow: {t['shadow']};
 }}
-.driver-card:hover {{ transform: translateY(-3px); border-color: {t['border2']}; }}
-.driver-question {{
-    color: {t['text']};
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.35;
-    min-height: 38px;
+.hero::before {{
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+        linear-gradient({t['grid']} 1px, transparent 1px),
+        linear-gradient(90deg, {t['grid']} 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,.8), transparent 90%);
+    pointer-events: none;
 }}
-.driver-answer {{
-    font-family: "Fraunces", Georgia, serif;
-    font-size: 21px;
-    font-weight: 600;
-    margin-top: 9px;
-    color: {t['text']};
+.hero::after {{
+    content: "";
+    position: absolute;
+    width: 650px; height: 650px;
+    right: -180px; top: -230px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--weather-b), var(--weather-a) 34%, transparent 68%);
+    filter: blur(12px);
+    opacity: .42;
+    animation: orbFloat 11s ease-in-out infinite;
+    pointer-events: none;
 }}
-.driver-reading {{
+.hero-noise {{
+    position: absolute; inset: 0; opacity: .065; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+}}
+.hero-inner {{
+    position: relative; z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1.28fr) minmax(330px, .72fr);
+    gap: 44px;
+    min-height: 650px;
+    padding: 54px 56px 42px;
+}}
+.hero-copy {{ align-self: center; }}
+.hero-kicker {{
+    display: flex; align-items: center; gap: 12px;
+    color: {t['muted']};
     font-family: "IBM Plex Mono", monospace;
     font-size: 11px;
-    color: {t['muted2']};
-    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: .15em;
 }}
-.driver-copy {{
-    color: {t['muted']};
-    font-size: 12.5px;
-    line-height: 1.5;
-    margin-top: 9px;
+.hero-kicker::before {{ content: ""; width: 46px; height: 1px; background: var(--weather-b); box-shadow: 0 0 10px var(--weather-b); }}
+.hero-title {{
+    margin-top: 26px;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(66px, 9.6vw, 136px);
+    font-weight: 600;
+    line-height: .82;
+    letter-spacing: -.075em;
+    text-transform: uppercase;
 }}
-.driver-pill {{
-    display: inline-block;
-    margin-top: 10px;
-    padding: 3px 9px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 700;
+.hero-title .line {{ display: block; animation: titleUp .8s cubic-bezier(.16,1,.3,1) both; }}
+.hero-title .line:nth-child(2) {{ animation-delay: .08s; }}
+.hero-title .gradient-word {{
+    color: transparent;
+    background: linear-gradient(90deg, var(--weather-b), {t['lime']} 42%, var(--weather-a));
+    -webkit-background-clip: text;
+    background-clip: text;
+    background-size: 180% 100%;
+    animation: titleUp .8s cubic-bezier(.16,1,.3,1) .08s both, gradientTravel 7s ease-in-out infinite alternate;
 }}
+.hero-description {{
+    max-width: 670px;
+    margin-top: 30px;
+    color: #C7C7D1;
+    font-size: clamp(16px, 1.7vw, 21px);
+    line-height: 1.48;
+    letter-spacing: -.018em;
+    animation: fadeRise .75s ease .24s both;
+}}
+.hero-rule {{
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 24px;
+    color: {t['text']};
+    font-size: 13px;
+    font-weight: 600;
+    animation: fadeRise .75s ease .34s both;
+}}
+.rule-icon {{
+    display: grid; place-items: center;
+    width: 25px; height: 25px;
+    border-radius: 50%;
+    color: #07070A;
+    background: {t['lime']};
+    box-shadow: 0 0 24px rgba(215,255,69,.25);
+}}
+
+/* Score console */
+.score-console {{
+    align-self: center;
+    position: relative;
+    min-height: 430px;
+    padding: 24px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 28px;
+    background: linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.025));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 24px 70px rgba(0,0,0,.28);
+    backdrop-filter: blur(22px);
+    animation: consoleIn .9s cubic-bezier(.16,1,.3,1) .18s both;
+}}
+.score-console::before {{
+    content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+    background: linear-gradient(130deg, var(--weather-b), transparent 34%, transparent 68%, var(--weather-a));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; opacity: .65; pointer-events: none;
+}}
+.console-top {{ display: flex; justify-content: space-between; align-items: center; gap: 12px; }}
+.console-label {{ color: {t['muted']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }}
+.weather-chip {{
+    padding: 6px 10px; border-radius: 999px;
+    color: #07070A; background: var(--weather-b);
+    font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600; text-transform: uppercase;
+}}
+.score-orbit {{
+    --score: 50;
+    position: relative;
+    display: grid; place-items: center;
+    width: min(265px, 78%); aspect-ratio: 1;
+    margin: 30px auto 20px;
+    border-radius: 50%;
+    background: conic-gradient(var(--weather-b) calc(var(--score) * 1%), rgba(255,255,255,.08) 0);
+    box-shadow: 0 0 70px rgba(69,231,255,.09);
+}}
+.score-orbit::before {{
+    content: ""; position: absolute; inset: 10px; border-radius: 50%;
+    background: radial-gradient(circle at 50% 34%, rgba(255,255,255,.09), #0D0D13 62%);
+    border: 1px solid rgba(255,255,255,.08);
+}}
+.score-orbit::after {{
+    content: ""; position: absolute; width: 12px; height: 12px; border-radius: 50%;
+    top: -2px; left: calc(50% - 6px); background: {t['lime']}; box-shadow: 0 0 18px {t['lime']};
+    transform-origin: 6px calc(50% + 127px);
+    transform: rotate(calc(var(--score) * 3.6deg));
+    opacity: .9;
+}}
+.score-core {{ position: relative; z-index: 2; text-align: center; }}
+.score-number {{
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(70px, 8vw, 106px);
+    font-weight: 500; line-height: .85; letter-spacing: -.08em;
+    animation: scoreReveal .85s cubic-bezier(.16,1,.3,1) .55s both;
+}}
+.score-denom {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 11px; margin-top: 9px; letter-spacing: .12em; }}
+.console-scale {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }}
+.scale-segment {{ height: 4px; border-radius: 99px; background: rgba(255,255,255,.10); overflow: hidden; }}
+.scale-segment:nth-child(1) {{ background: linear-gradient(90deg, {t['green']}, {t['cyan']}); }}
+.scale-segment:nth-child(2) {{ background: linear-gradient(90deg, {t['cyan']}, {t['amber']}); }}
+.scale-segment:nth-child(3) {{ background: linear-gradient(90deg, {t['amber']}, {t['coral']}); }}
+.console-meta {{ display: flex; justify-content: space-between; gap: 16px; margin-top: 14px; color: {t['muted']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; }}
+
+/* Action strip */
+.action-strip {{
+    position: relative; z-index: 3;
+    display: grid; grid-template-columns: 1.1fr 1fr 1fr;
+    border-top: 1px solid {t['border']};
+    background: rgba(7,7,10,.78);
+    backdrop-filter: blur(18px);
+}}
+.action-cell {{ padding: 24px 28px; border-right: 1px solid {t['border']}; min-height: 126px; transition: background .2s ease; }}
+.action-cell:last-child {{ border-right: 0; }}
+.action-cell:hover {{ background: rgba(255,255,255,.035); }}
+.action-index {{ color: var(--weather-b); font-family: "IBM Plex Mono", monospace; font-size: 10px; }}
+.action-label {{ margin-top: 8px; color: {t['muted']}; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }}
+.action-value {{ margin-top: 7px; color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 18px; font-weight: 600; line-height: 1.25; letter-spacing: -.025em; }}
+.action-help {{ margin-top: 6px; color: {t['muted2']}; font-size: 11px; line-height: 1.4; }}
+
+/* Moving tape */
+.tape-shell {{
+    overflow: hidden; margin: 22px 0 0; border: 1px solid {t['border']}; border-radius: 999px;
+    background: rgba(255,255,255,.025); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}}
+.tape {{ display: flex; width: max-content; animation: tickerMove 34s linear infinite; }}
+.tape:hover {{ animation-play-state: paused; }}
+.tape-item {{
+    display: inline-flex; align-items: center; gap: 9px; padding: 10px 18px;
+    color: {t['muted']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; white-space: nowrap;
+}}
+.tape-ticker {{ color: {t['text']}; font-weight: 600; }}
+.tape-sep {{ color: {t['muted2']}; }}
+
+/* Section typography */
+.section-head {{
+    display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 34px;
+    align-items: start; margin: 94px 0 26px;
+}}
+.section-kicker {{ color: {t['lime']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; padding-top: 9px; }}
+.section-title {{
+    color: {t['text']}; font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(38px, 5.2vw, 70px); font-weight: 550; line-height: .98; letter-spacing: -.055em;
+    max-width: 900px;
+}}
+.section-copy {{ color: {t['muted']}; font-size: 15px; line-height: 1.6; max-width: 760px; margin-top: 16px; }}
+
+/* Signal bento */
+.signal-grid {{ display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }}
+.signal-card {{
+    position: relative; overflow: hidden; min-height: 270px; padding: 25px;
+    border: 1px solid {t['border']}; border-radius: 24px;
+    background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+    transition: transform .25s ease, border-color .25s ease, background .25s ease;
+}}
+.signal-card:nth-child(1) {{ grid-column: span 5; }}
+.signal-card:nth-child(2) {{ grid-column: span 7; }}
+.signal-card:nth-child(3) {{ grid-column: span 7; }}
+.signal-card:nth-child(4) {{ grid-column: span 5; }}
+.signal-card:hover {{ transform: translateY(-5px); border-color: {t['border2']}; background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.022)); }}
+.signal-card::after {{ content: ""; position: absolute; width: 220px; height: 220px; right: -110px; bottom: -130px; border-radius: 50%; background: var(--signal-color); filter: blur(70px); opacity: .17; }}
+.signal-number {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; }}
+.signal-question {{ margin-top: 35px; color: {t['muted']}; font-size: 13px; }}
+.signal-answer {{ margin-top: 9px; color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: clamp(29px, 3vw, 43px); font-weight: 600; line-height: 1; letter-spacing: -.045em; }}
+.signal-reading {{ margin-top: 13px; color: var(--signal-color); font-family: "IBM Plex Mono", monospace; font-size: 11px; }}
+.signal-copy {{ margin-top: 18px; color: {t['muted']}; font-size: 13px; line-height: 1.5; max-width: 500px; }}
+.signal-pill {{ display: inline-flex; margin-top: 18px; padding: 6px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }}
 .pill-green {{ color: {t['green']}; background: {t['green_bg']}; }}
 .pill-amber {{ color: {t['amber']}; background: {t['amber_bg']}; }}
 .pill-coral {{ color: {t['coral']}; background: {t['coral_bg']}; }}
-.pill-muted {{ color: {t['muted']}; background: {t['border']}; }}
+.pill-muted {{ color: {t['muted']}; background: rgba(255,255,255,.07); }}
+.signal-viz {{ position: absolute; right: 22px; top: 22px; width: 84px; height: 84px; border: 1px solid {t['border']}; border-radius: 50%; }}
+.signal-viz::before, .signal-viz::after {{ content: ""; position: absolute; border-radius: 50%; inset: 12px; border: 1px solid var(--signal-color); opacity: .45; }}
+.signal-viz::after {{ inset: 29px; background: var(--signal-color); box-shadow: 0 0 24px var(--signal-color); opacity: .85; animation: livePulse 2.6s ease-in-out infinite; }}
 
-/* ---------- Index cards ---------- */
-.index-grid {{
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
-}}
+/* Index cards */
+.index-grid {{ display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }}
 .index-card {{
-    background: {t['surface']};
-    border: 1px solid {t['border']};
-    border-radius: 14px;
-    padding: 15px;
-    transition: transform .2s ease, border-color .2s ease;
+    position: relative; min-height: 220px; padding: 20px;
+    border: 1px solid {t['border']}; border-radius: 22px;
+    background: {t['surface']}; overflow: hidden;
+    transition: transform .25s ease, border-color .25s ease;
 }}
-.index-card:hover {{ transform: translateY(-3px); border-color: {t['border2']}; }}
-.index-ticker {{
-    font-family: "IBM Plex Mono", monospace;
-    color: {t['text']};
-    font-size: 15px;
-    font-weight: 600;
-}}
-.index-name {{ color: {t['muted']}; font-size: 11.5px; margin-top: 3px; min-height: 30px; }}
-.index-price {{
-    font-family: "IBM Plex Mono", monospace;
-    color: {t['text']};
-    font-size: 19px;
-    font-weight: 600;
-    margin-top: 10px;
-}}
-.index-returns {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 12px; }}
-.index-period {{ color: {t['muted2']}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }}
-.index-return {{ font-family: "IBM Plex Mono", monospace; color: {t['text']}; font-size: 11.5px; font-weight: 600; margin-top: 2px; }}
+.index-card:hover {{ transform: translateY(-5px); border-color: {t['border2']}; }}
+.index-card::before {{ content: ""; position: absolute; inset: 0 0 auto 0; height: 2px; background: linear-gradient(90deg, transparent, var(--card-accent), transparent); opacity: .8; }}
+.index-top {{ display: flex; justify-content: space-between; align-items: start; gap: 12px; }}
+.index-ticker {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 650; letter-spacing: -.04em; }}
+.index-dot {{ width: 9px; height: 9px; border-radius: 50%; background: var(--card-accent); box-shadow: 0 0 16px var(--card-accent); }}
+.index-name {{ color: {t['muted']}; font-size: 11px; margin-top: 4px; min-height: 32px; }}
+.index-price {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 28px; font-weight: 500; letter-spacing: -.05em; margin-top: 23px; }}
+.index-returns {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 23px; padding-top: 15px; border-top: 1px solid {t['border']}; }}
+.index-period {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 8px; text-transform: uppercase; letter-spacing: .08em; }}
+.index-return {{ color: {t['text']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600; margin-top: 4px; }}
 .positive {{ color: {t['green']} !important; }}
 .negative {{ color: {t['coral']} !important; }}
 
-/* ---------- Performance ---------- */
-.performance-intro {{
-    color: {t['muted']};
-    font-size: 13px;
-    line-height: 1.5;
-    margin-bottom: 10px;
+/* Performance lab */
+.performance-shell {{
+    margin-top: 18px; padding: 24px; border: 1px solid {t['border']}; border-radius: 26px;
+    background: linear-gradient(150deg, rgba(255,255,255,.045), rgba(255,255,255,.014));
 }}
-.performance-stats {{
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 9px;
-    margin: 10px 0 6px;
-}}
-.summary-card {{
-    background: {t['surface']};
-    border: 1px solid {t['border']};
-    border-radius: 12px;
-    padding: 13px 15px;
-}}
-.summary-label {{ color: {t['muted2']}; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; }}
-.summary-value {{ font-family: "IBM Plex Mono", monospace; color: {t['text']}; font-size: 14px; font-weight: 600; margin-top: 5px; }}
+.performance-intro {{ color: {t['muted']}; font-size: 14px; line-height: 1.55; max-width: 820px; }}
+.performance-intro b {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; }}
+.performance-stats {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 0 6px; }}
+.summary-card {{ position: relative; overflow: hidden; min-height: 100px; border: 1px solid {t['border']}; border-radius: 17px; padding: 16px; background: rgba(255,255,255,.025); }}
+.summary-card::after {{ content: ""; position: absolute; width: 100px; height: 100px; right: -45px; bottom: -60px; border-radius: 50%; background: {t['violet']}; filter: blur(40px); opacity: .18; }}
+.summary-label {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 9px; text-transform: uppercase; letter-spacing: .09em; }}
+.summary-value {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 18px; font-weight: 600; margin-top: 11px; letter-spacing: -.025em; }}
 
-/* ---------- Learn cards ---------- */
-.learn-item {{ padding: 6px 0 12px; }}
-.learn-q {{
-    font-family: "Fraunces", Georgia, serif;
-    color: {t['text']};
-    font-size: 16.5px;
-    font-weight: 600;
-}}
-.learn-a {{
-    color: {t['muted']};
-    font-size: 13.5px;
-    line-height: 1.55;
-    margin-top: 5px;
-}}
+/* Learn panel */
+.learn-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }}
+.learn-item {{ border: 1px solid {t['border']}; border-radius: 18px; padding: 18px; background: rgba(255,255,255,.022); }}
+.learn-q {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 17px; font-weight: 600; letter-spacing: -.025em; }}
+.learn-a {{ color: {t['muted']}; font-size: 13px; line-height: 1.55; margin-top: 8px; }}
 
 .footer {{
-    color: {t['muted']};
-    font-size: 11.5px;
-    line-height: 1.55;
-    border-top: 1px solid {t['border']};
-    padding-top: 16px;
-    margin-top: 32px;
+    margin-top: 90px; padding: 30px 0 0; border-top: 1px solid {t['border']};
+    color: {t['muted2']}; font-size: 11px; line-height: 1.6;
 }}
+.footer-brand {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: clamp(42px, 7vw, 92px); font-weight: 600; letter-spacing: -.07em; line-height: .9; margin-bottom: 28px; }}
+.footer-brand span {{ color: {t['lime']}; }}
 
-/* ---------- Motion ---------- */
-@keyframes reportIn {{
-    from {{ opacity: 0; transform: translateY(14px); }}
-    to   {{ opacity: 1; transform: translateY(0); }}
-}}
-@keyframes fadeUp {{
-    from {{ opacity: 0; transform: translateY(8px); }}
-    to   {{ opacity: 1; transform: translateY(0); }}
-}}
-@keyframes markerGlide {{
-    from {{ left: 0%; opacity: 0; }}
-    to   {{ left: var(--pos); opacity: 1; }}
-}}
-@keyframes wordRise {{
-    from {{ opacity: 0; transform: translateY(.5em) rotate(1.2deg); filter: blur(3px); }}
-    to   {{ opacity: 1; transform: translateY(0) rotate(0); filter: blur(0); }}
-}}
-@keyframes scorePop {{
-    from {{ opacity: 0; transform: translateY(10px) scale(.7); }}
-    60%  {{ opacity: 1; transform: translateY(-2px) scale(1.07); }}
-    to   {{ opacity: 1; transform: translateY(0) scale(1); }}
-}}
-@keyframes trackSheen {{
-    from {{ background-position: 220% 0; }}
-    to   {{ background-position: -120% 0; }}
-}}
-@keyframes markerLand {{
-    0%   {{ box-shadow: 0 3px 12px rgba(0,0,0,.25), 0 0 0 0 {t['pulse']}; }}
-    100% {{ box-shadow: 0 3px 12px rgba(0,0,0,.25), 0 0 0 14px rgba(0,0,0,0); }}
-}}
-@keyframes glowDrift {{
-    0%, 100% {{ transform: translate(0, 0) scale(1); opacity: .45; }}
-    50%      {{ transform: translate(-20px, 16px) scale(1.12); opacity: .75; }}
-}}
-@keyframes dotBlink {{
-    0%, 100% {{ opacity: 1; }}
-    50%      {{ opacity: .3; }}
-}}
+/* Motion */
+@keyframes titleUp {{ from {{ opacity: 0; transform: translateY(45px); filter: blur(6px); }} to {{ opacity: 1; transform: translateY(0); filter: blur(0); }} }}
+@keyframes fadeRise {{ from {{ opacity: 0; transform: translateY(16px); }} to {{ opacity: 1; transform: translateY(0); }} }}
+@keyframes consoleIn {{ from {{ opacity: 0; transform: translateY(22px) rotate(1.5deg) scale(.97); }} to {{ opacity: 1; transform: translateY(0) rotate(0) scale(1); }} }}
+@keyframes scoreReveal {{ from {{ opacity: 0; transform: scale(.72); }} to {{ opacity: 1; transform: scale(1); }} }}
+@keyframes gradientTravel {{ from {{ background-position: 0% 50%; }} to {{ background-position: 100% 50%; }} }}
+@keyframes orbFloat {{ 0%,100% {{ transform: translate(0,0) scale(1); }} 50% {{ transform: translate(-60px,70px) scale(1.1); }} }}
+@keyframes tickerMove {{ from {{ transform: translateX(0); }} to {{ transform: translateX(-50%); }} }}
+@keyframes livePulse {{ 0%,100% {{ opacity: 1; transform: scale(1); }} 50% {{ opacity: .45; transform: scale(.75); }} }}
+@keyframes spinSlow {{ to {{ transform: rotate(360deg); }} }}
 
-/* Scroll-triggered reveals — modern browsers only; others show content normally */
 @supports (animation-timeline: view()) {{
-    .driver-card, .index-card {{
-        animation: fadeUp .6s cubic-bezier(.2,.8,.2,1) both;
+    .signal-card, .index-card, .performance-shell {{
+        animation: fadeRise .65s cubic-bezier(.16,1,.3,1) both;
         animation-timeline: view();
-        animation-range: entry 5% entry 40%;
+        animation-range: entry 5% entry 38%;
     }}
 }}
 
-@media (max-width: 980px) {{
-    .masthead {{ flex-direction: column; align-items: flex-start; gap: 10px; }}
-    .freshness {{ justify-content: flex-start; }}
-    .report-grid {{ grid-template-columns: 1fr; gap: 26px; }}
-    .index-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+@media (max-width: 1100px) {{
+    .hero-inner {{ grid-template-columns: 1fr; padding: 46px 42px 36px; }}
+    .score-console {{ max-width: 520px; width: 100%; }}
+    .hero-title {{ font-size: clamp(68px, 13vw, 118px); }}
+    .index-grid {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
 }}
-@media (max-width: 640px) {{
-    .report-card {{ padding: 22px 20px; border-radius: 16px; }}
-    .plan-grid, .performance-stats {{ grid-template-columns: 1fr; }}
+@media (max-width: 820px) {{
+    .block-container {{ padding-left: 1rem; padding-right: 1rem; }}
+    .top-rail {{ align-items: flex-start; flex-direction: column; }}
+    .top-status {{ justify-content: flex-start; }}
+    .hero {{ border-radius: 24px; }}
+    .hero-inner {{ padding: 36px 24px 28px; min-height: auto; }}
+    .hero-title {{ font-size: clamp(58px, 16vw, 92px); }}
+    .action-strip {{ grid-template-columns: 1fr; }}
+    .action-cell {{ border-right: 0; border-bottom: 1px solid {t['border']}; }}
+    .action-cell:last-child {{ border-bottom: 0; }}
+    .section-head {{ grid-template-columns: 1fr; gap: 10px; margin-top: 70px; }}
+    .section-kicker {{ padding-top: 0; }}
+    .signal-card:nth-child(n) {{ grid-column: span 12; }}
+    .index-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+    .performance-stats, .learn-grid {{ grid-template-columns: 1fr; }}
+}}
+@media (max-width: 520px) {{
+    .hero-title {{ font-size: 54px; }}
+    .score-console {{ padding: 18px; min-height: 380px; }}
     .index-grid {{ grid-template-columns: 1fr; }}
+    .stTabs [data-baseweb="tab-list"] {{ width: 100%; overflow-x: auto; }}
 }}
 @media (prefers-reduced-motion: reduce) {{
-    *, *::before, *::after {{
-        animation-duration: .001ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: .001ms !important;
-    }}
+    *, *::before, *::after {{ animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }}
 }}
 </style>
 """,
         unsafe_allow_html=True,
     )
-
 
 # ============================================================
 # Constants
@@ -1279,11 +1164,12 @@ def make_return_chart(return_table, period, title, theme, benchmark_return=None)
     if chart.empty:
         return None
 
-    chart["Label"] = chart["Name"] + " · " + chart["Ticker"]
+    chart["Label"] = chart["Ticker"] + "  /  " + chart["Name"]
     chart = chart.sort_values(period, ascending=True)
     colors = [theme["green"] if value >= 0 else theme["coral"] for value in chart[period]]
 
-    figure = go.Figure(
+    figure = go.Figure()
+    figure.add_trace(
         go.Bar(
             x=chart[period],
             y=chart["Label"],
@@ -1291,8 +1177,9 @@ def make_return_chart(return_table, period, title, theme, benchmark_return=None)
             marker={"color": colors, "line": {"width": 0}},
             text=[f"{value:+.2f}%" for value in chart[period]],
             textposition="outside",
+            textfont={"family": "IBM Plex Mono", "size": 11},
             cliponaxis=False,
-            hovertemplate="<b>%{y}</b><br>Total return: %{x:+.2f}%<extra></extra>",
+            hovertemplate="<b>%{y}</b><br>Adjusted return: %{x:+.2f}%<extra></extra>",
         )
     )
 
@@ -1301,25 +1188,37 @@ def make_return_chart(return_table, period, title, theme, benchmark_return=None)
             x=benchmark_return,
             line_width=1.4,
             line_dash="dot",
-            line_color=theme["muted"],
+            line_color=theme["lime"],
             annotation_text=f"SPY {benchmark_return:+.2f}%",
             annotation_position="top",
-            annotation_font_color=theme["muted"],
+            annotation_font_color=theme["lime"],
+            annotation_font_family="IBM Plex Mono",
+            annotation_font_size=10,
         )
 
-    figure.add_vline(x=0, line_width=1, line_color=theme["border2"])
+    figure.add_vline(x=0, line_width=1, line_color="rgba(255,255,255,.20)")
     figure.update_layout(
-        title={"text": title, "x": 0.01, "xanchor": "left", "font": {"size": 15, "family": "Instrument Sans"}},
-        height=max(370, 48 * len(chart) + 100),
+        title={"text": title.upper(), "x": 0.01, "xanchor": "left", "font": {"size": 12, "family": "IBM Plex Mono", "color": theme["muted"]}},
+        height=max(390, 50 * len(chart) + 110),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font={"color": theme["text"], "family": "Instrument Sans, sans-serif", "size": 12},
-        margin={"l": 10, "r": 76, "t": 52, "b": 20},
+        font={"color": theme["text"], "family": "DM Sans, sans-serif", "size": 12},
+        margin={"l": 8, "r": 78, "t": 58, "b": 18},
         showlegend=False,
-        bargap=0.34,
-        hoverlabel={"bgcolor": theme["surface"], "font_color": theme["text"]},
-        xaxis={"title": None, "ticksuffix": "%", "gridcolor": theme["border"], "zeroline": False},
-        yaxis={"title": None, "automargin": True},
+        bargap=0.42,
+        hoverlabel={"bgcolor": theme["surface3"], "bordercolor": theme["border2"], "font_color": theme["text"]},
+        xaxis={
+            "title": None,
+            "ticksuffix": "%",
+            "gridcolor": "rgba(255,255,255,.065)",
+            "zeroline": False,
+            "tickfont": {"family": "IBM Plex Mono", "size": 10, "color": theme["muted2"]},
+        },
+        yaxis={
+            "title": None,
+            "automargin": True,
+            "tickfont": {"family": "Space Grotesk", "size": 11, "color": theme["muted"]},
+        },
     )
     return figure
 
@@ -1343,9 +1242,9 @@ def render_performance_view(title, copy, assets, prices, key, theme, show_benchm
         st.markdown(
             f"""
 <div class="performance-stats">
-  <div class="summary-card"><div class="summary-label">Best performer</div><div class="summary-value">{summary['leader']}</div></div>
-  <div class="summary-card"><div class="summary-label">Worst performer</div><div class="summary-value">{summary['laggard']}</div></div>
-  <div class="summary-card"><div class="summary-label">How many are up</div><div class="summary-value">{summary['breadth']}</div></div>
+  <div class="summary-card"><div class="summary-label">Leader / {period}</div><div class="summary-value">{summary['leader']}</div></div>
+  <div class="summary-card"><div class="summary-label">Laggard / {period}</div><div class="summary-value">{summary['laggard']}</div></div>
+  <div class="summary-card"><div class="summary-label">Breadth / {period}</div><div class="summary-value">{summary['breadth']}</div></div>
 </div>
 """,
             unsafe_allow_html=True,
@@ -1355,9 +1254,9 @@ def render_performance_view(title, copy, assets, prices, key, theme, show_benchm
     if figure is None:
         st.warning("Performance data is unavailable right now.")
         return
-    st.plotly_chart(figure, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(figure, use_container_width=True, config={"displayModeBar": False, "scrollZoom": False})
 
-    with st.expander("See every return period as a table"):
+    with st.expander("Open full return matrix"):
         display = table.copy()
         for item in RETURN_PERIODS:
             display[item] = display[item].apply(fmt_return)
@@ -1372,8 +1271,10 @@ def section_header(kicker, title, copy):
         f"""
 <div class="section-head">
   <div class="section-kicker">{kicker}</div>
-  <div class="section-title">{title}</div>
-  <div class="section-copy">{copy}</div>
+  <div>
+    <div class="section-title">{title}</div>
+    <div class="section-copy">{copy}</div>
+  </div>
 </div>
 """,
         unsafe_allow_html=True,
@@ -1381,8 +1282,9 @@ def section_header(kicker, title, copy):
 
 
 def render_core_index_cards(prices):
+    accents = [THEME["lime"], THEME["cyan"], THEME["violet"], THEME["pink"], THEME["amber"]]
     cards = []
-    for name, ticker in CORE_INDEXES.items():
+    for i, (name, ticker) in enumerate(CORE_INDEXES.items()):
         if ticker not in prices.columns:
             continue
         series = pd.to_numeric(prices[ticker], errors="coerce").dropna()
@@ -1394,14 +1296,13 @@ def render_core_index_cards(prices):
         one_year = calculate_period_return(series, "1Y")
         cards.append(
             f"""
-<div class="index-card">
-  <div class="index-ticker">{ticker}</div>
-  <div class="index-name">{name}</div>
+<div class="index-card" style="--card-accent:{accents[i % len(accents)]};">
+  <div class="index-top"><div><div class="index-ticker">{ticker}</div><div class="index-name">{name}</div></div><span class="index-dot"></span></div>
   <div class="index-price">${price:,.2f}</div>
   <div class="index-returns">
-    <div><div class="index-period">Today</div><div class="index-return {return_class(one_day)}">{fmt_return(one_day)}</div></div>
-    <div><div class="index-period">This yr</div><div class="index-return {return_class(ytd)}">{fmt_return(ytd)}</div></div>
-    <div><div class="index-period">1 yr</div><div class="index-return {return_class(one_year)}">{fmt_return(one_year)}</div></div>
+    <div><div class="index-period">1 day</div><div class="index-return {return_class(one_day)}">{fmt_return(one_day)}</div></div>
+    <div><div class="index-period">YTD</div><div class="index-return {return_class(ytd)}">{fmt_return(ytd)}</div></div>
+    <div><div class="index-period">1 year</div><div class="index-return {return_class(one_year)}">{fmt_return(one_year)}</div></div>
   </div>
 </div>
 """
@@ -1417,23 +1318,35 @@ def reading_text(signal_name, reading):
     return fmt_number(reading, 2)
 
 
+def render_ticker_tape(prices):
+    items = []
+    for name, ticker in CORE_INDEXES.items():
+        if ticker not in prices.columns:
+            continue
+        series = pd.to_numeric(prices[ticker], errors="coerce").dropna()
+        if len(series) < 2:
+            continue
+        change = calculate_period_return(series, "1D")
+        css_class = return_class(change)
+        items.append(f'<span class="tape-item"><span class="tape-ticker">{ticker}</span><span>{name}</span><span class="{css_class}">{fmt_return(change)}</span><span class="tape-sep">///</span></span>')
+    if not items:
+        return
+    sequence = "".join(items)
+    st.markdown(f'<div class="tape-shell"><div class="tape">{sequence}{sequence}</div></div>', unsafe_allow_html=True)
+
 # ============================================================
 # Controls and data load
 # ============================================================
 theme = current_theme()
 inject_css(theme)
 
-control_spacer, control_mode, control_refresh = st.columns([0.72, 0.15, 0.13])
-with control_mode:
-    st.toggle("Dark mode", key="dark_mode")
-with control_refresh:
-    if st.button("Refresh data", use_container_width=True):
+rail_left, rail_right = st.columns([0.84, 0.16])
+with rail_right:
+    if st.button("↻  Refresh market", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
-theme = current_theme()
-
-with st.spinner("Reading today's market weather..."):
+with st.spinner("Syncing market signal..."):
     market_prices = fetch_market_prices(ALL_MARKET_TICKERS)
     put_call = fetch_cboe_equity_put_call()
     treasury = fetch_treasury_curve()
@@ -1443,19 +1356,24 @@ if technical is None:
     loaded_symbols = [ticker for ticker in ALL_MARKET_TICKERS if ticker in market_prices.columns]
     st.markdown(
         """
-<div class="masthead">
-  <div>
-    <div class="wordmark">Should I Buy <em>Today?</em></div>
-    <div class="masthead-sub">Market data could not be loaded reliably, so no signal is shown.</div>
+<div class="top-rail">
+  <div class="brand"><span class="brand-mark"></span><span class="brand-name">SHOULD I BUY TODAY? // MARKET WEATHER</span></div>
+</div>
+<div class="hero" style="min-height:420px;">
+  <div class="hero-inner" style="min-height:420px;grid-template-columns:1fr;">
+    <div class="hero-copy">
+      <div class="hero-kicker">Data link interrupted</div>
+      <div class="hero-title" style="font-size:clamp(52px,9vw,108px);"><span class="line">NO SIGNAL.</span></div>
+      <div class="hero-description">The S&P 500 index and its SPY fallback are both unavailable. The app is refusing to manufacture an answer from partial data.</div>
+    </div>
   </div>
 </div>
 """,
         unsafe_allow_html=True,
     )
-    st.error("The S&P 500 index and its SPY fallback are both unavailable. Yahoo may be rate-limiting this deployment.")
+    st.error("Yahoo may be rate-limiting this deployment. Refresh once the data feed recovers.")
     if loaded_symbols:
         st.caption(f"Other symbols loaded: {', '.join(loaded_symbols)}")
-    st.info("Wait a minute and press Refresh data. Critical symbols retry independently, so a temporary failure shouldn't blank the dashboard on the next attempt.")
     st.stop()
 
 score, signal_frame = build_heat_score(
@@ -1468,182 +1386,162 @@ plan = recommendation(score)
 confidence, available_count, confidence_reason = confidence_summary(signal_frame)
 latest_market_date = technical["latest_date"]
 market_age_days = max(0, (NOW_PT.date() - latest_market_date.date()).days)
-
 market_date_label = latest_market_date.strftime("%b %d, %Y")
 refresh_label = NOW_PT.strftime("%b %d · %I:%M %p PT")
-report_date_label = NOW_PT.strftime("%A, %B %d, %Y")
-
-
-# ============================================================
-# Masthead
-# ============================================================
-st.markdown(
-    f"""
-<div class="masthead">
-  <div>
-    <div class="wordmark">Should I Buy <em>Today?</em></div>
-    <div class="masthead-sub">A daily market weather report for long-term index investors. Not a forecast — a sizing guide.</div>
-  </div>
-  <div class="freshness">
-    <span class="meta-pill"><span class="status-dot"></span>prices thru {market_date_label}</span>
-    <span class="meta-pill">refreshed {refresh_label}</span>
-    <span class="meta-pill">inputs {available_count}/4</span>
-    <span class="meta-pill">source: {technical['source_label']}</span>
-  </div>
-</div>
-""",
-    unsafe_allow_html=True,
-)
-
-if market_age_days > 4:
-    st.warning(f"Market prices are {market_age_days} calendar days old. Treat today's report as stale until data refreshes.")
-
+report_date_label = NOW_PT.strftime("%A / %B %d / %Y")
 
 # ============================================================
-# Today's report (hero)
+# Top rail
 # ============================================================
-marker = clamp(score, 0, 100) if score is not None else 50
-
-# Word-by-word verdict reveal
-verdict_words = " ".join(
-    f'<span class="w" style="animation-delay:{0.10 + i * 0.06:.2f}s">{word}</span>'
-    for i, word in enumerate(plan["verdict"].split())
-)
-
-# Ambient glow tinted by today's weather
-weather_hue = {
-    "Cold": theme["green"],
-    "Cool": theme["green"],
-    "Mild": theme["blue"],
-    "Warm": theme["amber"],
-    "Hot": theme["coral"],
-}.get(plan["weather"], theme["blue"])
-glow_style = f"--glow: color-mix(in srgb, {weather_hue} 26%, transparent);"
-
-st.markdown(
-    f"""
-<div class="report-card">
-  <div class="report-grid">
-    <div>
-      <div class="eyebrow">Today's report · {report_date_label}</div>
-      <div class="verdict">{verdict_words}</div>
-      <div class="verdict-copy">{plan['copy']}</div>
-      <div class="guardrail">✓&nbsp; Your automatic investing never changes. This only sizes optional extra cash.</div>
-    </div>
-    <div class="thermo-panel" style="{glow_style}">
-      <div class="thermo-head">
-        <div class="weather-word"><small>Market weather</small>{plan['weather']}</div>
-        <div class="score-reading"><b>{score}</b>of 100</div>
-      </div>
-      <div class="thermo-track"><div class="thermo-marker" style="--pos:{marker}%;"></div></div>
-      <div class="thermo-labels"><span>Fearful — better prices</span><span>Normal</span><span>Stretched — easy to overpay</span></div>
-      <div class="thermo-meta"><span>confidence: {confidence.lower()}</span><span>0–100 heat index</span></div>
-    </div>
-  </div>
-  <div class="plan-grid">
-    <div class="plan-tile">
-      <div class="plan-label">If you have extra cash</div>
-      <div class="plan-value">{plan['extra_buy']}</div>
-      <div class="plan-help">100% means whatever you'd normally invest on top of your automatic plan.</div>
-    </div>
-    <div class="plan-tile">
-      <div class="plan-label">What to hold back</div>
-      <div class="plan-value">{plan['hold']}</div>
-      <div class="plan-help">Spreading buys beats trying to predict one perfect day.</div>
-    </div>
-    <div class="plan-tile">
-      <div class="plan-label">What to avoid</div>
-      <div class="plan-value">{plan['avoid']}</div>
-      <div class="plan-help">There is never a sell signal here, and never a change to your long-term plan.</div>
-    </div>
-  </div>
-</div>
-""",
-    unsafe_allow_html=True,
-)
-
-# ---------- First-time explainer ----------
-with st.expander("🌱 New here? Read this first — it takes 30 seconds"):
+with rail_left:
     st.markdown(
-        """
-<div class="learn-item">
-  <div class="learn-q">What is this?</div>
-  <div class="learn-a">A daily gauge of whether the stock market looks fearful, normal, or overheated — like a weather report. It helps you decide how much <b>extra</b> cash to invest today on top of your regular automatic investing.</div>
-</div>
-<div class="learn-item">
-  <div class="learn-q">What is "automatic investing" (DCA)?</div>
-  <div class="learn-a">Dollar-cost averaging: investing the same amount on a schedule (say, every payday) no matter what the market does. It's the backbone of long-term investing, and <b>nothing on this page ever tells you to change it</b>.</div>
-</div>
-<div class="learn-item">
-  <div class="learn-q">Why does "fear" mean better prices?</div>
-  <div class="learn-a">When investors are scared, they sell, and prices fall. For someone buying to hold for decades, lower prices are a discount — even though it feels worse to buy on a scary day than a euphoric one.</div>
-</div>
-<div class="learn-item">
-  <div class="learn-q">What is this NOT?</div>
-  <div class="learn-a">Not a prediction of tomorrow. Not a stock-picking tool. Not financial advice. It never says "sell." It's a discipline tool that leans slightly against the crowd, sized in percentages of <i>your</i> normal amount.</div>
+        f"""
+<div class="top-rail">
+  <div class="brand">
+    <span class="brand-mark"></span>
+    <span class="brand-name">SHOULD I BUY TODAY? // MARKET WEATHER</span>
+    <span class="brand-slash">LONG-TERM INDEX SIGNAL</span>
+  </div>
+  <div class="top-status">
+    <span class="micro-pill"><span class="live-dot"></span>LIVE MODEL</span>
+    <span class="micro-pill">PRICES / {market_date_label}</span>
+    <span class="micro-pill">INPUTS / {available_count} OF 4</span>
+  </div>
 </div>
 """,
         unsafe_allow_html=True,
     )
 
+if market_age_days > 4:
+    st.warning(f"Market prices are {market_age_days} calendar days old. Treat this signal as stale until the feed refreshes.")
 
 # ============================================================
-# Why today's answer
+# Immersive hero
+# ============================================================
+weather_palette = {
+    "Cold": (theme["green"], theme["cyan"]),
+    "Cool": (theme["cyan"], theme["green"]),
+    "Mild": (theme["violet"], theme["cyan"]),
+    "Warm": (theme["amber"], theme["pink"]),
+    "Hot": (theme["coral"], theme["amber"]),
+}
+weather_a, weather_b = weather_palette.get(plan["weather"], (theme["violet"], theme["cyan"]))
+
+verdict_lines = {
+    "Cold": ("BUY", "MORE."),
+    "Cool": ("LEAN", "IN."),
+    "Mild": ("BUY", "NORMAL."),
+    "Warm": ("SIZE", "DOWN."),
+    "Hot": ("DON'T", "CHASE."),
+}.get(plan["weather"], ("STAY", "STEADY."))
+
+st.markdown(
+    f"""
+<div class="hero" style="--weather-a:{weather_a};--weather-b:{weather_b};">
+  <div class="hero-noise"></div>
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <div class="hero-kicker">TODAY'S SIGNAL / {report_date_label}</div>
+      <div class="hero-title">
+        <span class="line">{verdict_lines[0]}</span>
+        <span class="line gradient-word">{verdict_lines[1]}</span>
+      </div>
+      <div class="hero-description">{plan['copy']}</div>
+      <div class="hero-rule"><span class="rule-icon">✓</span><span>Your automatic investing stays untouched. This only sizes optional extra cash.</span></div>
+    </div>
+    <div class="score-console">
+      <div class="console-top"><span class="console-label">Market heat index</span><span class="weather-chip">{plan['weather']}</span></div>
+      <div class="score-orbit" style="--score:{score};">
+        <div class="score-core"><div class="score-number">{score}</div><div class="score-denom">OF 100 / HEAT</div></div>
+      </div>
+      <div class="console-scale"><span class="scale-segment"></span><span class="scale-segment"></span><span class="scale-segment"></span></div>
+      <div class="console-meta"><span>FEARFUL / BETTER PRICES</span><span>STRETCHED / OVERPAY RISK</span></div>
+      <div class="console-meta"><span>CONFIDENCE / {confidence.upper()}</span><span>REFRESH / {refresh_label}</span></div>
+    </div>
+  </div>
+  <div class="action-strip">
+    <div class="action-cell"><div class="action-index">01 / DEPLOY</div><div class="action-label">Extra cash today</div><div class="action-value">{plan['extra_buy']}</div><div class="action-help">Relative to the extra amount you would normally invest.</div></div>
+    <div class="action-cell"><div class="action-index">02 / RESERVE</div><div class="action-label">Keep flexibility</div><div class="action-value">{plan['hold']}</div><div class="action-help">A sequence of good decisions beats one heroic prediction.</div></div>
+    <div class="action-cell"><div class="action-index">03 / AVOID</div><div class="action-label">Behavioral trap</div><div class="action-value">{plan['avoid']}</div><div class="action-help">No sell signal. No market prophecy. No interruption to DCA.</div></div>
+  </div>
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+render_ticker_tape(market_prices)
+
+with st.expander("New here? Decode the signal in 30 seconds"):
+    st.markdown(
+        """
+<div class="learn-grid">
+  <div class="learn-item"><div class="learn-q">What is this?</div><div class="learn-a">A daily gauge of whether the broad market looks fearful, normal, or overheated. It helps size optional extra cash on top of your regular investing.</div></div>
+  <div class="learn-item"><div class="learn-q">What stays constant?</div><div class="learn-a">Your dollar-cost-averaging schedule. This dashboard never tells a long-term investor to pause the habit that matters most.</div></div>
+  <div class="learn-item"><div class="learn-q">Why can fear help buyers?</div><div class="learn-a">Fear pushes prices down. For someone buying productive assets for decades, lower prices are useful—even when the headlines feel awful.</div></div>
+  <div class="learn-item"><div class="learn-q">What is this not?</div><div class="learn-a">Not a forecast, stock picker, or trading signal. It never says sell. It is a disciplined sizing framework for optional money.</div></div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+# ============================================================
+# Signal evidence
 # ============================================================
 section_header(
-    "The reasoning",
-    "Why today reads " + plan["weather"].lower(),
-    f"Four questions, answered by live market data, blended into one score. Confidence is {confidence.lower()}: {confidence_reason}",
+    "01 / SIGNAL DNA",
+    f"Why the market reads {plan['weather'].lower()}.",
+    f"Four live inputs are translated into plain English, then blended using fixed audited weights. Confidence is {confidence.lower()}: {confidence_reason}",
 )
 
 ordered = signal_frame.reindex(signal_frame["WeightedImpact"].abs().sort_values(ascending=False).index)
-columns = st.columns(4)
-for column, (_, row) in zip(columns, ordered.iterrows()):
+signal_colors = [theme["cyan"], theme["violet"], theme["lime"], theme["amber"]]
+signal_cards = []
+for i, (_, row) in enumerate(ordered.iterrows(), start=1):
     plain = SIGNAL_PLAIN.get(row["Signal"], {"name": row["Signal"], "question": "", "technical": row["Signal"]})
     pill_class, pill_text = driver_pill(row)
-    with column:
-        st.markdown(
-            f"""
-<div class="driver-card">
-  <div class="driver-question">{plain['question']}</div>
-  <div class="driver-answer">{row['Status']}</div>
-  <div class="driver-reading">{plain['technical']}: {reading_text(row['Signal'], row['Reading'])}</div>
-  <div class="driver-copy">{row['Explanation']}</div>
-  <span class="driver-pill {pill_class}">{pill_text}</span>
+    signal_color = signal_colors[(i - 1) % len(signal_colors)]
+    signal_cards.append(
+        f"""
+<div class="signal-card" style="--signal-color:{signal_color};">
+  <div class="signal-number">0{i} / {plain['name'].upper()}</div>
+  <div class="signal-viz"></div>
+  <div class="signal-question">{plain['question']}</div>
+  <div class="signal-answer">{row['Status']}</div>
+  <div class="signal-reading">{plain['technical'].upper()} / {reading_text(row['Signal'], row['Reading'])}</div>
+  <div class="signal-copy">{row['Explanation']}</div>
+  <span class="signal-pill {pill_class}">{pill_text}</span>
 </div>
-""",
-            unsafe_allow_html=True,
-        )
-
+"""
+    )
+st.markdown(f'<div class="signal-grid">{"".join(signal_cards)}</div>', unsafe_allow_html=True)
 
 # ============================================================
-# Core index snapshot
+# Core market
 # ============================================================
 section_header(
-    "The market",
-    "Today at a glance",
-    "The broad building blocks most long-term portfolios actually own — US stocks, international stocks, and bonds. Returns use adjusted prices.",
+    "02 / MARKET PULSE",
+    "The building blocks, at a glance.",
+    "The broad assets most index investors actually own. Adjusted prices include distributions where the data source provides them.",
 )
 render_core_index_cards(market_prices)
 
-
 # ============================================================
-# Performance
+# Performance lab
 # ============================================================
 section_header(
-    "Go deeper",
-    "Compare performance",
-    "Start with the broad indexes, then see whether a handful of giant companies — or particular sectors — are doing all the work.",
+    "03 / PERFORMANCE LAB",
+    "See what is carrying the market.",
+    "Switch the time horizon. Compare the broad indexes, the Magnificent 7, and all eleven S&P 500 sector ETFs without drowning in a spreadsheet.",
 )
-index_tab, mag7_tab, sector_tab = st.tabs(["Core indexes", "The Magnificent 7", "S&P 500 sectors"])
+index_tab, mag7_tab, sector_tab = st.tabs(["Core indexes", "Magnificent 7", "S&P 500 sectors"])
 
 with index_tab:
     render_performance_view(
         "Core indexes",
-        "US stocks vs. international stocks vs. bonds over the period you pick.",
+        "US stocks, international stocks, and bonds over the period you choose.",
         CORE_INDEXES,
         market_prices,
-        "core_period",
+        "core_period_universe",
         theme,
         show_benchmark=False,
     )
@@ -1651,10 +1549,10 @@ with index_tab:
 with mag7_tab:
     render_performance_view(
         "Magnificent 7",
-        "The seven biggest US tech companies. The dotted line is the whole S&P 500 (SPY) — anything right of it is beating the market.",
+        "Seven giant companies versus SPY. The dotted lime line is the S&P 500 benchmark.",
         MAG7,
         market_prices,
-        "mag7_period",
+        "mag7_period_universe",
         theme,
         show_benchmark=True,
     )
@@ -1662,42 +1560,37 @@ with mag7_tab:
 with sector_tab:
     render_performance_view(
         "S&P 500 sector ETFs",
-        "Eleven slices of the US economy via the Select Sector SPDR ETFs — investable proxies, not the exact underlying sector indexes.",
+        "Eleven investable slices of the US economy. The dotted lime line is SPY.",
         SP500_SECTORS,
         market_prices,
-        "sector_period",
+        "sector_period_universe",
         theme,
         show_benchmark=True,
     )
 
-
 # ============================================================
-# Under the hood
+# Audit layer
 # ============================================================
 section_header(
-    "Trust, but verify",
-    "Under the hood",
-    "Everything needed to audit today's score — the exact weights, raw readings, and data sources.",
+    "04 / AUDIT MODE",
+    "Trust the interface. Verify the machinery.",
+    "Open the model only when you want it. The recommendation remains simple; the math remains fully inspectable.",
 )
 
-with st.expander("Open the full methodology, signal table, and advanced charts"):
+with st.expander("Open methodology, raw inputs, and advanced charts"):
     st.markdown(
         """
-**How the score works**
+### How the score works
 
-The Market Heat Score is a transparent, rule-based index — not a forecast of tomorrow's return. Four inputs: the VIX fear gauge (30%), broad-market momentum via 14-day RSI (25%), distance from the 200-day average (25%), and the Cboe equity put/call ratio (20%). The S&P 500 index is preferred; SPY is a disclosed fallback when the index feed is unavailable. Higher means more stretched; lower means more fearful.
+The Market Heat Score is a transparent, rule-based index—not a forecast of tomorrow's return. Four inputs: the VIX fear gauge (30%), broad-market momentum via 14-day RSI (25%), distance from the 200-day average (25%), and the Cboe equity put/call ratio (20%). The S&P 500 index is preferred; SPY is a disclosed fallback when the index feed is unavailable. Higher means more stretched; lower means more fearful.
 
-When an input is unavailable, it's replaced with a neutral 50 and confidence drops. The missing weight is **not** silently redistributed, so the score means the same thing every day.
+When an input is unavailable, it is replaced with a neutral 50 and confidence drops. The missing weight is **not** redistributed, so the 0–100 scale stays consistent from day to day.
 """
     )
 
-    signal_display = signal_frame[
-        ["Signal", "Reading", "Status", "Weight", "UsedScore", "Available", "Explanation"]
-    ].copy()
+    signal_display = signal_frame[["Signal", "Reading", "Status", "Weight", "UsedScore", "Available", "Explanation"]].copy()
     signal_display.insert(0, "Plain name", signal_display["Signal"].map(lambda s: SIGNAL_PLAIN.get(s, {}).get("name", s)))
-    signal_display["Reading"] = signal_display.apply(
-        lambda row: reading_text(row["Signal"], row["Reading"]), axis=1
-    )
+    signal_display["Reading"] = signal_display.apply(lambda row: reading_text(row["Signal"], row["Reading"]), axis=1)
     signal_display["Weight"] = signal_display["Weight"].apply(lambda value: f"{value:.0%}")
     signal_display["UsedScore"] = signal_display["UsedScore"].round(1)
     signal_display["Available"] = signal_display["Available"].map({True: "Yes", False: "No — neutral used"})
@@ -1708,20 +1601,26 @@ When an input is unavailable, it's replaced with a neutral 50 and confidence dro
     with trend_tab:
         history = technical["history"]
         figure = go.Figure()
-        figure.add_trace(go.Scatter(x=history["Date"], y=history["Close"], mode="lines",
-                                    name=technical["source_label"], line={"color": theme["blue"], "width": 2}))
-        figure.add_trace(go.Scatter(x=history["Date"], y=history["SMA 200"], mode="lines",
-                                    name="200-day average", line={"color": theme["muted"], "width": 1.6, "dash": "dot"}))
+        figure.add_trace(
+            go.Scatter(
+                x=history["Date"], y=history["Close"], mode="lines", name=technical["source_label"],
+                line={"color": theme["cyan"], "width": 2.4}, fill="tozeroy", fillcolor="rgba(69,231,255,.045)"
+            )
+        )
+        figure.add_trace(
+            go.Scatter(
+                x=history["Date"], y=history["SMA 200"], mode="lines", name="200-day average",
+                line={"color": theme["lime"], "width": 1.6, "dash": "dot"}
+            )
+        )
         figure.update_layout(
-            height=400,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font={"color": theme["text"], "family": "Instrument Sans, sans-serif"},
-            margin={"l": 10, "r": 10, "t": 20, "b": 10},
-            legend={"orientation": "h"},
-            hovermode="x unified",
-            xaxis={"gridcolor": theme["border"]},
-            yaxis={"gridcolor": theme["border"]},
+            height=430,
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font={"color": theme["text"], "family": "DM Sans, sans-serif"},
+            margin={"l": 8, "r": 8, "t": 22, "b": 8}, legend={"orientation": "h", "y": 1.08}, hovermode="x unified",
+            xaxis={"gridcolor": "rgba(255,255,255,.06)", "zeroline": False},
+            yaxis={"gridcolor": "rgba(255,255,255,.06)", "zeroline": False},
+            hoverlabel={"bgcolor": theme["surface3"], "font_color": theme["text"]},
         )
         st.plotly_chart(figure, use_container_width=True, config={"displayModeBar": False})
 
@@ -1736,21 +1635,18 @@ When an input is unavailable, it's replaced with a neutral 50 and confidence dro
             curve_frame = pd.DataFrame(curve_rows)
             curve_figure = go.Figure(
                 go.Scatter(
-                    x=curve_frame["Maturity"],
-                    y=curve_frame["Yield (%)"],
-                    mode="lines+markers",
-                    name="Treasury yield",
-                    line={"color": theme["green"]},
+                    x=curve_frame["Maturity"], y=curve_frame["Yield (%)"], mode="lines+markers", name="Treasury yield",
+                    line={"color": theme["violet"], "width": 2.2}, marker={"color": theme["lime"], "size": 7}
                 )
             )
             curve_figure.update_layout(
-                height=350,
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                font={"color": theme["text"], "family": "Instrument Sans, sans-serif"},
-                margin={"l": 10, "r": 10, "t": 20, "b": 10},
-                xaxis={"gridcolor": theme["border"]},
-                yaxis={"ticksuffix": "%", "gridcolor": theme["border"]},
+                height=370,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font={"color": theme["text"], "family": "DM Sans, sans-serif"},
+                margin={"l": 8, "r": 8, "t": 22, "b": 8},
+                xaxis={"gridcolor": "rgba(255,255,255,.06)"},
+                yaxis={"ticksuffix": "%", "gridcolor": "rgba(255,255,255,.06)"},
+                hoverlabel={"bgcolor": theme["surface3"], "font_color": theme["text"]},
             )
             st.plotly_chart(curve_figure, use_container_width=True, config={"displayModeBar": False})
             if treasury.get("Date") is not None:
@@ -1761,19 +1657,20 @@ When an input is unavailable, it's replaced with a neutral 50 and confidence dro
     with sources_tab:
         st.markdown(
             """
-- **Prices and adjusted returns:** Yahoo Finance via the open-source `yfinance` package. Critical index series are fetched independently, and SPY is a disclosed fallback for the technical signal. Data may be delayed; educational use only.
+- **Prices and adjusted returns:** Yahoo Finance through the open-source `yfinance` package. Critical index series are fetched independently, and SPY is a disclosed fallback for the technical signal. Data may be delayed.
 - **Equity put/call ratio:** Cboe Daily Market Statistics.
 - **Treasury curve:** U.S. Department of the Treasury daily par yield curve.
-- **Sector view:** the 11 Select Sector SPDR ETFs are investable proxies for S&P 500 sectors; their adjusted returns aren't identical to raw sector-index returns.
+- **Sector view:** the eleven Select Sector SPDR ETFs are investable proxies for S&P 500 sectors; their adjusted returns are not identical to raw sector-index returns.
 
-Headline sentiment and search trends are deliberately excluded from the core score. They're noisy, fail unpredictably, and made the score unstable from one refresh to the next.
+Headline sentiment and search trends remain excluded from the core score because they are noisy and operationally fragile.
 """
         )
 
 st.markdown(
     """
 <div class="footer">
-Educational only — not financial advice. Built for long-term index investors deciding how to size <b>optional</b> extra cash. It never recommends selling, never changes an automatic plan, and never predicts the market's next move.
+  <div class="footer-brand">BUILD THE HABIT.<br><span>IGNORE THE HYPE.</span></div>
+  Educational only—not financial advice. Built for long-term index investors deciding how to size optional extra cash. It never recommends selling, never changes an automatic plan, and never predicts the market's next move.
 </div>
 """,
     unsafe_allow_html=True,
