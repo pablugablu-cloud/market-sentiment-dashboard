@@ -40,7 +40,7 @@ PACIFIC = ZoneInfo("America/Los_Angeles")
 NOW_PT = datetime.now(PACIFIC)
 
 if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = False
+    st.session_state.dark_mode = True
 
 
 # ============================================================
