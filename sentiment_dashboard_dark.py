@@ -7,7 +7,7 @@ Design principles
 2. Weather language everywhere: Cold / Cool / Mild / Warm / Hot.
 3. Progressive disclosure: Signal -> Evidence -> Explore -> Audit.
 4. The audited score model, data fallbacks, and disclaimers remain unchanged.
-5. The presentation is intentionally bold, kinetic, and digital-first.
+5. The presentation is bright, grid-led, kinetic, and intentionally easy to scan.
 """
 
 import html as html_lib
@@ -39,35 +39,38 @@ PACIFIC = ZoneInfo("America/Los_Angeles")
 NOW_PT = datetime.now(PACIFIC)
 
 # ============================================================
-# Visual system — kinetic, high-contrast, digital-first
+# Visual system — bright, editorial, grid-led, modern
 # ============================================================
 THEME = {
-    "bg": "#07070A",
-    "surface": "#101015",
-    "surface2": "#15151C",
-    "surface3": "#1C1C25",
-    "text": "#F7F7F2",
-    "muted": "#A5A5B4",
-    "muted2": "#717180",
-    "border": "rgba(255,255,255,.10)",
-    "border2": "rgba(255,255,255,.20)",
-    "grid": "rgba(255,255,255,.035)",
-    "lime": "#D7FF45",
-    "green": "#52F6A8",
-    "green_bg": "rgba(82,246,168,.12)",
-    "violet": "#A982FF",
-    "violet_bg": "rgba(169,130,255,.14)",
-    "cyan": "#45E7FF",
-    "cyan_bg": "rgba(69,231,255,.12)",
-    "amber": "#FFB347",
-    "amber_bg": "rgba(255,179,71,.12)",
-    "coral": "#FF6B7A",
-    "coral_bg": "rgba(255,107,122,.12)",
-    "pink": "#FF5CD6",
-    "blue": "#6D8CFF",
-    "shadow": "0 28px 90px rgba(0,0,0,.42)",
+    "bg": "#EEF1EF",
+    "surface": "#F8FAF8",
+    "surface2": "#FFFFFF",
+    "surface3": "#E6EBE7",
+    "text": "#070908",
+    "muted": "#4E5752",
+    "muted2": "#747D78",
+    "border": "#CBD3CE",
+    "border2": "#9DAAA3",
+    "grid": "rgba(7,20,12,.075)",
+    "green": "#008A2E",
+    "green2": "#13B84A",
+    "green_bg": "rgba(0,138,46,.10)",
+    "lime": "#C9F24F",
+    "lime_bg": "rgba(201,242,79,.24)",
+    "violet": "#6847E8",
+    "violet_bg": "rgba(104,71,232,.10)",
+    "cyan": "#00A7B7",
+    "cyan_bg": "rgba(0,167,183,.10)",
+    "blue": "#2864E8",
+    "blue_bg": "rgba(40,100,232,.10)",
+    "amber": "#B58F00",
+    "amber_bg": "rgba(181,143,0,.11)",
+    "coral": "#E3552F",
+    "coral_bg": "rgba(227,85,47,.10)",
+    "pink": "#E7439C",
+    "orange": "#D96620",
+    "shadow": "0 24px 70px rgba(20,34,25,.12)",
 }
-
 
 def current_theme():
     return THEME
@@ -79,7 +82,7 @@ def inject_css(t):
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-:root {{ color-scheme: dark; }}
+:root {{ color-scheme: light; }}
 * {{ box-sizing: border-box; }}
 html {{ scroll-behavior: smooth; }}
 html, body, [class*="css"], .stApp, .stMarkdown, p, span, div, label {{
@@ -89,81 +92,76 @@ body {{ background: {t['bg']}; }}
 .stApp {{
     color: {t['text']};
     background:
-        radial-gradient(circle at 18% -10%, rgba(169,130,255,.14), transparent 30%),
-        radial-gradient(circle at 92% 10%, rgba(69,231,255,.08), transparent 25%),
+        linear-gradient({t['grid']} 1px, transparent 1px),
+        linear-gradient(90deg, {t['grid']} 1px, transparent 1px),
         {t['bg']};
+    background-size: 86px 86px;
 }}
 [data-testid="stHeader"] {{ background: transparent; }}
 [data-testid="stToolbar"], [data-testid="stDecoration"], #MainMenu, footer {{ display: none; }}
-.block-container {{ max-width: 1320px; padding: 1.15rem 2.1rem 5rem; }}
+.block-container {{ max-width: 1380px; padding: 0.6rem 2.2rem 5rem; }}
 
 /* Streamlit controls */
 div[data-testid="stButton"] button {{
-    min-height: 42px;
-    border: 1px solid {t['border2']};
-    border-radius: 999px;
-    background: rgba(255,255,255,.055);
-    color: {t['text']};
+    min-height: 44px;
+    border: 1px solid {t['green']};
+    border-radius: 2px;
+    background: {t['green']};
+    color: #FFFFFF;
     font-family: "Space Grotesk", sans-serif;
-    font-weight: 600;
+    font-weight: 650;
     letter-spacing: -.01em;
     box-shadow: none;
-    backdrop-filter: blur(16px);
-    transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
 }}
 div[data-testid="stButton"] button:hover {{
     transform: translateY(-2px);
-    border-color: {t['lime']};
-    background: rgba(215,255,69,.08);
-    color: {t['lime']};
+    background: #006F25;
+    color: #FFFFFF;
+    box-shadow: 0 10px 24px rgba(0,138,46,.18);
 }}
-div[data-testid="stButton"] button:focus-visible {{ outline: 2px solid {t['lime']}; outline-offset: 3px; }}
+div[data-testid="stButton"] button:focus-visible {{ outline: 3px solid {t['lime']}; outline-offset: 3px; }}
 
 .stTabs [data-baseweb="tab-list"] {{
-    gap: 8px;
-    padding: 6px;
+    gap: 0;
+    padding: 0;
     border: 1px solid {t['border']};
-    border-radius: 999px;
-    background: rgba(255,255,255,.035);
+    border-radius: 0;
+    background: {t['surface2']};
     width: fit-content;
 }}
 .stTabs [data-baseweb="tab"] {{
-    height: 42px;
-    border-radius: 999px;
+    height: 44px;
+    border-radius: 0;
+    border-right: 1px solid {t['border']};
     padding: 0 18px;
     color: {t['muted']};
     font-family: "Space Grotesk", sans-serif;
     font-weight: 600;
 }}
-.stTabs [aria-selected="true"] {{
-    color: #07070A !important;
-    background: {t['lime']} !important;
-}}
+.stTabs [data-baseweb="tab"]:last-child {{ border-right: 0; }}
+.stTabs [aria-selected="true"] {{ color: #FFFFFF !important; background: {t['green']} !important; }}
 .stTabs [data-baseweb="tab-border"] {{ display: none; }}
 
 div[role="radiogroup"] {{ gap: 7px; flex-wrap: wrap; margin: 12px 0 18px; }}
 div[role="radiogroup"] label {{
     border: 1px solid {t['border']};
     border-radius: 999px;
-    background: rgba(255,255,255,.035);
+    background: {t['surface2']};
     padding: 5px 11px;
     transition: border-color .18s ease, background .18s ease, transform .18s ease;
 }}
-div[role="radiogroup"] label:hover {{ transform: translateY(-1px); border-color: {t['border2']}; }}
-div[role="radiogroup"] label:has(input:checked) {{
-    background: {t['text']};
-    color: #09090C;
-    border-color: {t['text']};
-}}
+div[role="radiogroup"] label:hover {{ transform: translateY(-1px); border-color: {t['green']}; }}
+div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; color: #FFFFFF; border-color: {t['text']}; }}
 [data-testid="stExpander"] {{
     border: 1px solid {t['border']} !important;
-    border-radius: 20px !important;
-    background: rgba(255,255,255,.025) !important;
+    border-radius: 0 !important;
+    background: {t['surface2']} !important;
     overflow: hidden;
 }}
 [data-testid="stExpander"] summary {{ font-family: "Space Grotesk", sans-serif; font-weight: 600; }}
-[data-testid="stDataFrame"] {{ border: 1px solid {t['border']}; border-radius: 16px; overflow: hidden; }}
-[data-testid="stPlotlyChart"] {{ margin-top: 10px; padding: 12px; border: 1px solid {t['border']}; border-radius: 22px; background: rgba(255,255,255,.018); overflow: hidden; }}
+[data-testid="stDataFrame"] {{ border: 1px solid {t['border']}; border-radius: 0; overflow: hidden; }}
+[data-testid="stPlotlyChart"] {{ margin-top: 10px; padding: 12px; border: 1px solid {t['border']}; border-radius: 0; background: {t['surface2']}; overflow: hidden; }}
 
 /* Top rail */
 .top-rail {{
@@ -171,49 +169,45 @@ div[role="radiogroup"] label:has(input:checked) {{
     align-items: center;
     justify-content: space-between;
     gap: 18px;
-    padding: 8px 2px 20px;
+    min-height: 62px;
+    border: 1px solid {t['border']};
+    border-bottom: 0;
+    background: {t['surface3']};
+    padding: 0 18px;
 }}
-.brand {{ display: flex; align-items: center; gap: 11px; }}
+.brand {{ display: flex; align-items: center; gap: 11px; min-width: 0; }}
 .brand-mark {{
-    width: 22px; height: 22px; border-radius: 50%;
-    background: conic-gradient(from 180deg, {t['lime']}, {t['cyan']}, {t['violet']}, {t['pink']}, {t['lime']});
-    box-shadow: 0 0 34px rgba(169,130,255,.4);
-    animation: spinSlow 12s linear infinite;
+    width: 25px; height: 25px; border-radius: 50%;
+    background: conic-gradient(from 180deg, {t['green']}, {t['lime']}, {t['blue']}, {t['pink']}, {t['green']});
+    border: 3px solid {t['text']};
+    animation: spinSlow 14s linear infinite;
 }}
-.brand-name {{
-    font-family: "Space Grotesk", sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    letter-spacing: -.02em;
-}}
-.brand-slash {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 11px; }}
-.top-status {{ display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }}
+.brand-name {{ font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 14px; letter-spacing: -.02em; }}
+.brand-slash {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; }}
+.top-status {{ display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0; }}
 .micro-pill {{
     display: inline-flex; align-items: center; gap: 7px;
-    padding: 6px 10px;
-    border: 1px solid {t['border']};
-    border-radius: 999px;
+    min-height: 34px; padding: 0 10px;
+    border-left: 1px solid {t['border']};
     color: {t['muted']};
-    background: rgba(255,255,255,.025);
+    background: transparent;
     font-family: "IBM Plex Mono", monospace;
-    font-size: 10px;
+    font-size: 9px;
     white-space: nowrap;
 }}
-.live-dot {{ width: 6px; height: 6px; border-radius: 50%; background: {t['green']}; box-shadow: 0 0 12px {t['green']}; animation: livePulse 2.2s ease-in-out infinite; }}
+.live-dot {{ width: 7px; height: 7px; border-radius: 50%; background: {t['green']}; box-shadow: 0 0 0 4px rgba(0,138,46,.10); animation: livePulse 2.2s ease-in-out infinite; }}
 
 /* Hero */
 .hero {{
     --weather-a: {t['violet']};
-    --weather-b: {t['cyan']};
+    --weather-b: {t['green']};
     position: relative;
     min-height: 650px;
     overflow: hidden;
     isolation: isolate;
     border: 1px solid {t['border']};
-    border-radius: 34px;
-    background:
-        linear-gradient(110deg, rgba(255,255,255,.04), transparent 38%),
-        #0B0B10;
+    border-radius: 0;
+    background: {t['surface2']};
     box-shadow: {t['shadow']};
 }}
 .hero::before {{
@@ -222,33 +216,34 @@ div[role="radiogroup"] label:has(input:checked) {{
     background-image:
         linear-gradient({t['grid']} 1px, transparent 1px),
         linear-gradient(90deg, {t['grid']} 1px, transparent 1px);
-    background-size: 42px 42px;
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,.8), transparent 90%);
+    background-size: 54px 54px;
     pointer-events: none;
 }}
 .hero::after {{
     content: "";
     position: absolute;
-    width: 650px; height: 650px;
-    right: -180px; top: -230px;
+    width: 620px; height: 620px;
+    right: -170px; top: -260px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, var(--weather-b), var(--weather-a) 34%, transparent 68%);
-    filter: blur(12px);
-    opacity: .42;
-    animation: orbFloat 11s ease-in-out infinite;
+    background:
+        radial-gradient(circle at 36% 35%, rgba(255,255,255,.70), transparent 14%),
+        radial-gradient(circle at 42% 42%, var(--weather-b), var(--weather-a) 46%, transparent 72%);
+    filter: blur(4px);
+    opacity: .22;
+    animation: orbFloat 12s ease-in-out infinite;
     pointer-events: none;
 }}
 .hero-noise {{
-    position: absolute; inset: 0; opacity: .065; pointer-events: none;
+    position: absolute; inset: 0; opacity: .035; pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
 }}
 .hero-inner {{
     position: relative; z-index: 2;
     display: grid;
-    grid-template-columns: minmax(0, 1.28fr) minmax(330px, .72fr);
+    grid-template-columns: minmax(0, 1.18fr) minmax(420px, .82fr);
     gap: 44px;
     min-height: 650px;
-    padding: 54px 56px 42px;
+    padding: 54px 54px 42px;
 }}
 .hero-copy {{ align-self: center; }}
 .hero-kicker {{
@@ -257,145 +252,199 @@ div[role="radiogroup"] label:has(input:checked) {{
     font-family: "IBM Plex Mono", monospace;
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: .15em;
+    letter-spacing: .13em;
 }}
-.hero-kicker::before {{ content: ""; width: 46px; height: 1px; background: var(--weather-b); box-shadow: 0 0 10px var(--weather-b); }}
+.hero-kicker::before {{ content: ""; width: 46px; height: 2px; background: {t['green']}; }}
 .hero-title {{
-    margin-top: 26px;
+    margin-top: 27px;
     font-family: "Space Grotesk", sans-serif;
-    font-size: clamp(66px, 9.6vw, 136px);
-    font-weight: 600;
-    line-height: .82;
-    letter-spacing: -.075em;
+    font-size: clamp(68px, 8.6vw, 132px);
+    font-weight: 650;
+    line-height: .83;
+    letter-spacing: -.078em;
     text-transform: uppercase;
+    max-width: 830px;
 }}
 .hero-title .line {{ display: block; animation: titleUp .8s cubic-bezier(.16,1,.3,1) both; }}
 .hero-title .line:nth-child(2) {{ animation-delay: .08s; }}
 .hero-title .gradient-word {{
     color: transparent;
-    background: linear-gradient(90deg, var(--weather-b), {t['lime']} 42%, var(--weather-a));
+    background: linear-gradient(90deg, {t['green']} 0%, {t['cyan']} 44%, {t['blue']} 72%, {t['violet']} 100%);
     -webkit-background-clip: text;
     background-clip: text;
-    background-size: 180% 100%;
+    background-size: 165% 100%;
     animation: titleUp .8s cubic-bezier(.16,1,.3,1) .08s both, gradientTravel 7s ease-in-out infinite alternate;
 }}
 .hero-description {{
-    max-width: 670px;
+    max-width: 660px;
     margin-top: 30px;
-    color: #C7C7D1;
-    font-size: clamp(16px, 1.7vw, 21px);
+    color: {t['muted']};
+    font-size: clamp(16px, 1.6vw, 21px);
     line-height: 1.48;
     letter-spacing: -.018em;
     animation: fadeRise .75s ease .24s both;
 }}
 .hero-rule {{
-    display: flex; align-items: center; gap: 10px;
-    margin-top: 24px;
+    display: inline-flex; align-items: center; gap: 11px;
+    margin-top: 25px;
+    padding: 12px 14px;
+    border: 1px solid {t['border']};
+    background: rgba(255,255,255,.75);
     color: {t['text']};
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 650;
     animation: fadeRise .75s ease .34s both;
 }}
 .rule-icon {{
     display: grid; place-items: center;
-    width: 25px; height: 25px;
+    flex: 0 0 auto;
+    width: 26px; height: 26px;
     border-radius: 50%;
-    color: #07070A;
+    color: {t['text']};
     background: {t['lime']};
-    box-shadow: 0 0 24px rgba(215,255,69,.25);
+    border: 1px solid {t['text']};
 }}
 
-/* Score console */
+/* Score console — three-stage horizontal heat bar */
 .score-console {{
     align-self: center;
     position: relative;
-    min-height: 430px;
-    padding: 24px;
-    border: 1px solid rgba(255,255,255,.14);
-    border-radius: 28px;
-    background: linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.025));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 24px 70px rgba(0,0,0,.28);
-    backdrop-filter: blur(22px);
+    min-height: 440px;
+    padding: 28px;
+    border: 1px solid {t['border2']};
+    border-radius: 0;
+    background:
+        linear-gradient(135deg, rgba(104,71,232,.11), rgba(255,255,255,.95) 38%, rgba(0,138,46,.07));
+    box-shadow: 14px 14px 0 {t['lime']};
     animation: consoleIn .9s cubic-bezier(.16,1,.3,1) .18s both;
 }}
 .score-console::before {{
-    content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
-    background: linear-gradient(130deg, var(--weather-b), transparent 34%, transparent 68%, var(--weather-a));
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor; mask-composite: exclude; opacity: .65; pointer-events: none;
+    content: ""; position: absolute; left: -1px; top: -1px; right: -1px; height: 7px;
+    background: linear-gradient(90deg, {t['green']} 0 35%, {t['blue']} 35% 65%, {t['pink']} 65% 100%);
 }}
 .console-top {{ display: flex; justify-content: space-between; align-items: center; gap: 12px; }}
-.console-label {{ color: {t['muted']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }}
+.console-label {{ color: {t['cyan']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }}
 .weather-chip {{
-    padding: 6px 10px; border-radius: 999px;
-    color: #07070A; background: var(--weather-b);
-    font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600; text-transform: uppercase;
+    padding: 7px 11px; border-radius: 999px;
+    color: {t['text']}; background: {t['lime']};
+    border: 1px solid {t['text']};
+    font-family: "IBM Plex Mono", monospace; font-size: 9px; font-weight: 700; text-transform: uppercase;
 }}
-.score-orbit {{
-    --score: 50;
-    position: relative;
-    display: grid; place-items: center;
-    width: min(265px, 78%); aspect-ratio: 1;
-    margin: 30px auto 20px;
-    border-radius: 50%;
-    background: conic-gradient(var(--weather-b) calc(var(--score) * 1%), rgba(255,255,255,.08) 0);
-    box-shadow: 0 0 70px rgba(69,231,255,.09);
-}}
-.score-orbit::before {{
-    content: ""; position: absolute; inset: 10px; border-radius: 50%;
-    background: radial-gradient(circle at 50% 34%, rgba(255,255,255,.09), #0D0D13 62%);
-    border: 1px solid rgba(255,255,255,.08);
-}}
-.score-orbit::after {{
-    content: ""; position: absolute; width: 12px; height: 12px; border-radius: 50%;
-    top: -2px; left: calc(50% - 6px); background: {t['lime']}; box-shadow: 0 0 18px {t['lime']};
-    transform-origin: 6px calc(50% + 127px);
-    transform: rotate(calc(var(--score) * 3.6deg));
-    opacity: .9;
-}}
-.score-core {{ position: relative; z-index: 2; text-align: center; }}
+.heat-summary {{ display: grid; grid-template-columns: auto 1fr; align-items: end; gap: 24px; margin-top: 38px; }}
 .score-number {{
+    color: {t['text']};
     font-family: "Space Grotesk", sans-serif;
-    font-size: clamp(70px, 8vw, 106px);
-    font-weight: 500; line-height: .85; letter-spacing: -.08em;
+    font-size: clamp(82px, 8vw, 116px);
+    font-weight: 560; line-height: .78; letter-spacing: -.085em;
     animation: scoreReveal .85s cubic-bezier(.16,1,.3,1) .55s both;
 }}
-.score-denom {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 11px; margin-top: 9px; letter-spacing: .12em; }}
-.console-scale {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }}
-.scale-segment {{ height: 4px; border-radius: 99px; background: rgba(255,255,255,.10); overflow: hidden; }}
-.scale-segment:nth-child(1) {{ background: linear-gradient(90deg, {t['green']}, {t['cyan']}); }}
-.scale-segment:nth-child(2) {{ background: linear-gradient(90deg, {t['cyan']}, {t['amber']}); }}
-.scale-segment:nth-child(3) {{ background: linear-gradient(90deg, {t['amber']}, {t['coral']}); }}
-.console-meta {{ display: flex; justify-content: space-between; gap: 16px; margin-top: 14px; color: {t['muted']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; }}
+.score-stage {{ color: var(--weather-a); font-family: "Space Grotesk", sans-serif; font-size: clamp(24px, 2.3vw, 34px); font-weight: 650; line-height: 1; letter-spacing: -.045em; }}
+.score-denom {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; margin-top: 10px; letter-spacing: .10em; }}
+.heat-bar-wrap {{ margin-top: 46px; }}
+.heat-track {{
+    --score: 50;
+    position: relative;
+    display: grid;
+    grid-template-columns: 35fr 30fr 35fr;
+    height: 14px;
+    border: 1px solid {t['text']};
+    background: {t['surface2']};
+}}
+.heat-zone {{ min-width: 0; }}
+.heat-zone.fear {{ background: linear-gradient(90deg, {t['lime']}, #57E7A1); }}
+.heat-zone.normal {{ background: linear-gradient(90deg, #55D7E5, {t['blue']}); border-left: 3px solid {t['surface2']}; border-right: 3px solid {t['surface2']}; }}
+.heat-zone.stretched {{ background: linear-gradient(90deg, {t['violet']}, {t['pink']}, {t['coral']}); }}
+.heat-marker {{
+    position: absolute;
+    z-index: 3;
+    left: calc(var(--score) * 1%);
+    top: 50%;
+    width: 4px;
+    height: 31px;
+    transform: translate(-50%, -50%);
+    background: {t['text']};
+    box-shadow: 0 0 0 4px rgba(255,255,255,.74);
+    animation: markerSlide .9s cubic-bezier(.16,1,.3,1) .45s both;
+}}
+.heat-marker::before {{
+    content: attr(data-score);
+    position: absolute;
+    left: 50%; bottom: 31px;
+    transform: translateX(-50%);
+    min-width: 38px;
+    padding: 5px 7px;
+    border-radius: 999px;
+    background: {t['text']};
+    color: #FFFFFF;
+    text-align: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    font-weight: 700;
+}}
+.heat-ticks {{ display: flex; justify-content: space-between; margin-top: 10px; color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 9px; }}
+.heat-labels {{ display: grid; grid-template-columns: 35fr 30fr 35fr; gap: 15px; margin-top: 18px; }}
+.heat-label {{ min-width: 0; }}
+.heat-label:nth-child(2) {{ text-align: center; }}
+.heat-label:nth-child(3) {{ text-align: right; }}
+.heat-label b {{ display: block; font-family: "Space Grotesk", sans-serif; font-size: 14px; letter-spacing: -.02em; }}
+.heat-label span {{ display: block; margin-top: 5px; color: {t['muted']}; font-size: 10px; line-height: 1.35; }}
+.heat-label.fear b {{ color: {t['green']}; }}
+.heat-label.normal b {{ color: {t['blue']}; }}
+.heat-label.stretched b {{ color: {t['pink']}; }}
+.console-meta {{
+    display: flex; justify-content: space-between; gap: 16px;
+    margin-top: 24px; padding-top: 15px;
+    border-top: 1px solid {t['border']};
+    color: {t['muted']}; font-family: "IBM Plex Mono", monospace; font-size: 9px;
+}}
 
 /* Action strip */
 .action-strip {{
     position: relative; z-index: 3;
     display: grid; grid-template-columns: 1.1fr 1fr 1fr;
     border-top: 1px solid {t['border']};
-    background: rgba(7,7,10,.78);
-    backdrop-filter: blur(18px);
+    background: {t['surface2']};
 }}
-.action-cell {{ padding: 24px 28px; border-right: 1px solid {t['border']}; min-height: 126px; transition: background .2s ease; }}
+.action-cell {{
+    position: relative;
+    padding: 25px 28px;
+    border-right: 1px solid {t['border']};
+    min-height: 138px;
+    transition: transform .2s ease, filter .2s ease;
+}}
+.action-cell:nth-child(1) {{ background: #E7F4CC; }}
+.action-cell:nth-child(2) {{ background: #E7E4FF; }}
+.action-cell:nth-child(3) {{ background: #F7DCD0; }}
 .action-cell:last-child {{ border-right: 0; }}
-.action-cell:hover {{ background: rgba(255,255,255,.035); }}
-.action-index {{ color: var(--weather-b); font-family: "IBM Plex Mono", monospace; font-size: 10px; }}
-.action-label {{ margin-top: 8px; color: {t['muted']}; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }}
-.action-value {{ margin-top: 7px; color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 18px; font-weight: 600; line-height: 1.25; letter-spacing: -.025em; }}
-.action-help {{ margin-top: 6px; color: {t['muted2']}; font-size: 11px; line-height: 1.4; }}
+.action-cell:hover {{ transform: translateY(-4px); filter: saturate(1.06); z-index: 2; }}
+.action-index {{ color: {t['green']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600; }}
+.action-cell:nth-child(2) .action-index {{ color: {t['violet']}; }}
+.action-cell:nth-child(3) .action-index {{ color: {t['orange']}; }}
+.action-label {{ margin-top: 9px; color: {t['muted']}; font-size: 10px; text-transform: uppercase; letter-spacing: .10em; }}
+.action-value {{ margin-top: 8px; color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 19px; font-weight: 650; line-height: 1.22; letter-spacing: -.028em; }}
+.action-help {{ margin-top: 7px; color: {t['muted']}; font-size: 11px; line-height: 1.4; }}
 
 /* Moving tape */
 .tape-shell {{
-    overflow: hidden; margin: 22px 0 0; border: 1px solid {t['border']}; border-radius: 999px;
-    background: rgba(255,255,255,.025); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    overflow: hidden; margin: 22px 0 0;
+    border-top: 1px solid {t['border']}; border-bottom: 1px solid {t['border']};
+    background: {t['surface2']};
+    mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
 }}
 .tape {{ display: flex; width: max-content; animation: tickerMove 34s linear infinite; }}
 .tape:hover {{ animation-play-state: paused; }}
 .tape-item {{
-    display: inline-flex; align-items: center; gap: 9px; padding: 10px 18px;
+    display: inline-flex; align-items: center; gap: 9px; padding: 11px 19px;
+    border-right: 1px solid {t['border']};
     color: {t['muted']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; white-space: nowrap;
 }}
-.tape-ticker {{ color: {t['text']}; font-weight: 600; }}
+.tape-item:nth-child(5n+1) {{ background: #E7F4CC; }}
+.tape-item:nth-child(5n+2) {{ background: #171426; color: #FFFFFF; }}
+.tape-item:nth-child(5n+3) {{ background: #D8C9FF; }}
+.tape-item:nth-child(5n+4) {{ background: #F3A9C7; }}
+.tape-item:nth-child(5n+5) {{ background: #E9A06F; }}
+.tape-item:nth-child(5n+2) .tape-ticker {{ color: #FFFFFF; }}
+.tape-ticker {{ color: {t['text']}; font-weight: 700; }}
 .tape-sep {{ color: {t['muted2']}; }}
 
 /* Section typography */
@@ -403,10 +452,10 @@ div[role="radiogroup"] label:has(input:checked) {{
     display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 34px;
     align-items: start; margin: 94px 0 26px;
 }}
-.section-kicker {{ color: {t['lime']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; padding-top: 9px; }}
+.section-kicker {{ color: {t['green']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; padding-top: 9px; font-weight: 600; }}
 .section-title {{
     color: {t['text']}; font-family: "Space Grotesk", sans-serif;
-    font-size: clamp(38px, 5.2vw, 70px); font-weight: 550; line-height: .98; letter-spacing: -.055em;
+    font-size: clamp(38px, 5.2vw, 70px); font-weight: 570; line-height: .98; letter-spacing: -.055em;
     max-width: 900px;
 }}
 .section-copy {{ color: {t['muted']}; font-size: 15px; line-height: 1.6; max-width: 760px; margin-top: 16px; }}
@@ -415,45 +464,46 @@ div[role="radiogroup"] label:has(input:checked) {{
 .signal-grid {{ display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }}
 .signal-card {{
     position: relative; overflow: hidden; min-height: 270px; padding: 25px;
-    border: 1px solid {t['border']}; border-radius: 24px;
-    background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
-    transition: transform .25s ease, border-color .25s ease, background .25s ease;
+    border: 1px solid {t['border']}; border-radius: 0;
+    background: {t['surface2']};
+    box-shadow: 8px 8px 0 rgba(7,9,8,.055);
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
 }}
-.signal-card:nth-child(1) {{ grid-column: span 5; }}
-.signal-card:nth-child(2) {{ grid-column: span 7; }}
-.signal-card:nth-child(3) {{ grid-column: span 7; }}
-.signal-card:nth-child(4) {{ grid-column: span 5; }}
-.signal-card:hover {{ transform: translateY(-5px); border-color: {t['border2']}; background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.022)); }}
-.signal-card::after {{ content: ""; position: absolute; width: 220px; height: 220px; right: -110px; bottom: -130px; border-radius: 50%; background: var(--signal-color); filter: blur(70px); opacity: .17; }}
+.signal-card:nth-child(1) {{ grid-column: span 5; background: #EDF7DF; }}
+.signal-card:nth-child(2) {{ grid-column: span 7; background: #E9F3FF; }}
+.signal-card:nth-child(3) {{ grid-column: span 7; background: #F0EBFF; }}
+.signal-card:nth-child(4) {{ grid-column: span 5; background: #FCEDE5; }}
+.signal-card:hover {{ transform: translateY(-5px); border-color: {t['border2']}; box-shadow: 12px 12px 0 rgba(7,9,8,.08); }}
+.signal-card::after {{ content: ""; position: absolute; width: 220px; height: 220px; right: -110px; bottom: -130px; border-radius: 50%; background: var(--signal-color); filter: blur(70px); opacity: .12; }}
 .signal-number {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; }}
 .signal-question {{ margin-top: 35px; color: {t['muted']}; font-size: 13px; }}
-.signal-answer {{ margin-top: 9px; color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: clamp(29px, 3vw, 43px); font-weight: 600; line-height: 1; letter-spacing: -.045em; }}
-.signal-reading {{ margin-top: 13px; color: var(--signal-color); font-family: "IBM Plex Mono", monospace; font-size: 11px; }}
+.signal-answer {{ margin-top: 9px; color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: clamp(29px, 3vw, 43px); font-weight: 620; line-height: 1; letter-spacing: -.045em; }}
+.signal-reading {{ margin-top: 13px; color: var(--signal-color); font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600; }}
 .signal-copy {{ margin-top: 18px; color: {t['muted']}; font-size: 13px; line-height: 1.5; max-width: 500px; }}
 .signal-pill {{ display: inline-flex; margin-top: 18px; padding: 6px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }}
 .pill-green {{ color: {t['green']}; background: {t['green_bg']}; }}
 .pill-amber {{ color: {t['amber']}; background: {t['amber_bg']}; }}
 .pill-coral {{ color: {t['coral']}; background: {t['coral_bg']}; }}
-.pill-muted {{ color: {t['muted']}; background: rgba(255,255,255,.07); }}
-.signal-viz {{ position: absolute; right: 22px; top: 22px; width: 84px; height: 84px; border: 1px solid {t['border']}; border-radius: 50%; }}
+.pill-muted {{ color: {t['muted']}; background: rgba(7,9,8,.06); }}
+.signal-viz {{ position: absolute; right: 22px; top: 22px; width: 84px; height: 84px; border: 1px solid {t['border2']}; border-radius: 50%; background: rgba(255,255,255,.45); }}
 .signal-viz::before, .signal-viz::after {{ content: ""; position: absolute; border-radius: 50%; inset: 12px; border: 1px solid var(--signal-color); opacity: .45; }}
-.signal-viz::after {{ inset: 29px; background: var(--signal-color); box-shadow: 0 0 24px var(--signal-color); opacity: .85; animation: livePulse 2.6s ease-in-out infinite; }}
+.signal-viz::after {{ inset: 29px; background: var(--signal-color); box-shadow: 0 0 22px color-mix(in srgb, var(--signal-color) 40%, transparent); opacity: .85; animation: livePulse 2.6s ease-in-out infinite; }}
 
 /* Index cards */
 .index-grid {{ display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }}
 .index-card {{
     position: relative; min-height: 220px; padding: 20px;
-    border: 1px solid {t['border']}; border-radius: 22px;
-    background: {t['surface']}; overflow: hidden;
-    transition: transform .25s ease, border-color .25s ease;
+    border: 1px solid {t['border']}; border-radius: 0;
+    background: {t['surface2']}; overflow: hidden;
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
 }}
-.index-card:hover {{ transform: translateY(-5px); border-color: {t['border2']}; }}
-.index-card::before {{ content: ""; position: absolute; inset: 0 0 auto 0; height: 2px; background: linear-gradient(90deg, transparent, var(--card-accent), transparent); opacity: .8; }}
+.index-card:hover {{ transform: translateY(-5px); border-color: {t['border2']}; box-shadow: 9px 9px 0 var(--card-accent); }}
+.index-card::before {{ content: ""; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--card-accent); }}
 .index-top {{ display: flex; justify-content: space-between; align-items: start; gap: 12px; }}
 .index-ticker {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 650; letter-spacing: -.04em; }}
-.index-dot {{ width: 9px; height: 9px; border-radius: 50%; background: var(--card-accent); box-shadow: 0 0 16px var(--card-accent); }}
+.index-dot {{ width: 10px; height: 10px; border-radius: 0; background: var(--card-accent); }}
 .index-name {{ color: {t['muted']}; font-size: 11px; margin-top: 4px; min-height: 32px; }}
-.index-price {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 28px; font-weight: 500; letter-spacing: -.05em; margin-top: 23px; }}
+.index-price {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 28px; font-weight: 550; letter-spacing: -.05em; margin-top: 23px; }}
 .index-returns {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 23px; padding-top: 15px; border-top: 1px solid {t['border']}; }}
 .index-period {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 8px; text-transform: uppercase; letter-spacing: .08em; }}
 .index-return {{ color: {t['text']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600; margin-top: 4px; }}
@@ -462,39 +512,47 @@ div[role="radiogroup"] label:has(input:checked) {{
 
 /* Performance lab */
 .performance-shell {{
-    margin-top: 18px; padding: 24px; border: 1px solid {t['border']}; border-radius: 26px;
-    background: linear-gradient(150deg, rgba(255,255,255,.045), rgba(255,255,255,.014));
+    margin-top: 18px; padding: 24px;
+    border: 1px solid {t['border']}; border-radius: 0;
+    background: {t['surface2']};
 }}
 .performance-intro {{ color: {t['muted']}; font-size: 14px; line-height: 1.55; max-width: 820px; }}
 .performance-intro b {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; }}
 .performance-stats {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 0 6px; }}
-.summary-card {{ position: relative; overflow: hidden; min-height: 100px; border: 1px solid {t['border']}; border-radius: 17px; padding: 16px; background: rgba(255,255,255,.025); }}
-.summary-card::after {{ content: ""; position: absolute; width: 100px; height: 100px; right: -45px; bottom: -60px; border-radius: 50%; background: {t['violet']}; filter: blur(40px); opacity: .18; }}
+.summary-card {{ position: relative; overflow: hidden; min-height: 100px; border: 1px solid {t['border']}; border-radius: 0; padding: 16px; background: {t['surface3']}; }}
+.summary-card:nth-child(1) {{ background: #E7F4CC; }}
+.summary-card:nth-child(2) {{ background: #F7DCD0; }}
+.summary-card:nth-child(3) {{ background: #E7E4FF; }}
 .summary-label {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 9px; text-transform: uppercase; letter-spacing: .09em; }}
-.summary-value {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 18px; font-weight: 600; margin-top: 11px; letter-spacing: -.025em; }}
+.summary-value {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 18px; font-weight: 650; margin-top: 11px; letter-spacing: -.025em; }}
 
 /* Learn panel */
 .learn-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }}
-.learn-item {{ border: 1px solid {t['border']}; border-radius: 18px; padding: 18px; background: rgba(255,255,255,.022); }}
-.learn-q {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 17px; font-weight: 600; letter-spacing: -.025em; }}
+.learn-item {{ border: 1px solid {t['border']}; border-radius: 0; padding: 18px; background: {t['surface2']}; }}
+.learn-item:nth-child(1) {{ background: #EDF7DF; }}
+.learn-item:nth-child(2) {{ background: #E9F3FF; }}
+.learn-item:nth-child(3) {{ background: #F0EBFF; }}
+.learn-item:nth-child(4) {{ background: #FCEDE5; }}
+.learn-q {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 17px; font-weight: 650; letter-spacing: -.025em; }}
 .learn-a {{ color: {t['muted']}; font-size: 13px; line-height: 1.55; margin-top: 8px; }}
 
 .footer {{
     margin-top: 90px; padding: 30px 0 0; border-top: 1px solid {t['border']};
     color: {t['muted2']}; font-size: 11px; line-height: 1.6;
 }}
-.footer-brand {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: clamp(42px, 7vw, 92px); font-weight: 600; letter-spacing: -.07em; line-height: .9; margin-bottom: 28px; }}
-.footer-brand span {{ color: {t['lime']}; }}
+.footer-brand {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: clamp(42px, 7vw, 92px); font-weight: 620; letter-spacing: -.07em; line-height: .9; margin-bottom: 28px; }}
+.footer-brand span {{ color: {t['green']}; }}
 
 /* Motion */
 @keyframes titleUp {{ from {{ opacity: 0; transform: translateY(45px); filter: blur(6px); }} to {{ opacity: 1; transform: translateY(0); filter: blur(0); }} }}
 @keyframes fadeRise {{ from {{ opacity: 0; transform: translateY(16px); }} to {{ opacity: 1; transform: translateY(0); }} }}
-@keyframes consoleIn {{ from {{ opacity: 0; transform: translateY(22px) rotate(1.5deg) scale(.97); }} to {{ opacity: 1; transform: translateY(0) rotate(0) scale(1); }} }}
-@keyframes scoreReveal {{ from {{ opacity: 0; transform: scale(.72); }} to {{ opacity: 1; transform: scale(1); }} }}
+@keyframes consoleIn {{ from {{ opacity: 0; transform: translateY(22px) rotate(1deg); }} to {{ opacity: 1; transform: translateY(0) rotate(0); }} }}
+@keyframes scoreReveal {{ from {{ opacity: 0; transform: scale(.78); }} to {{ opacity: 1; transform: scale(1); }} }}
+@keyframes markerSlide {{ from {{ left: 0%; opacity: 0; }} to {{ left: calc(var(--score) * 1%); opacity: 1; }} }}
 @keyframes gradientTravel {{ from {{ background-position: 0% 50%; }} to {{ background-position: 100% 50%; }} }}
-@keyframes orbFloat {{ 0%,100% {{ transform: translate(0,0) scale(1); }} 50% {{ transform: translate(-60px,70px) scale(1.1); }} }}
+@keyframes orbFloat {{ 0%,100% {{ transform: translate(0,0) scale(1); }} 50% {{ transform: translate(-48px,62px) scale(1.08); }} }}
 @keyframes tickerMove {{ from {{ transform: translateX(0); }} to {{ transform: translateX(-50%); }} }}
-@keyframes livePulse {{ 0%,100% {{ opacity: 1; transform: scale(1); }} 50% {{ opacity: .45; transform: scale(.75); }} }}
+@keyframes livePulse {{ 0%,100% {{ opacity: 1; transform: scale(1); }} 50% {{ opacity: .45; transform: scale(.78); }} }}
 @keyframes spinSlow {{ to {{ transform: rotate(360deg); }} }}
 
 @supports (animation-timeline: view()) {{
@@ -505,19 +563,20 @@ div[role="radiogroup"] label:has(input:checked) {{
     }}
 }}
 
-@media (max-width: 1100px) {{
-    .hero-inner {{ grid-template-columns: 1fr; padding: 46px 42px 36px; }}
-    .score-console {{ max-width: 520px; width: 100%; }}
+@media (max-width: 1120px) {{
+    .hero-inner {{ grid-template-columns: 1fr; padding: 46px 42px 40px; }}
+    .score-console {{ max-width: 700px; width: 100%; box-shadow: 10px 10px 0 {t['lime']}; }}
     .hero-title {{ font-size: clamp(68px, 13vw, 118px); }}
     .index-grid {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
 }}
 @media (max-width: 820px) {{
     .block-container {{ padding-left: 1rem; padding-right: 1rem; }}
-    .top-rail {{ align-items: flex-start; flex-direction: column; }}
+    .top-rail {{ align-items: flex-start; flex-direction: column; padding: 14px; }}
     .top-status {{ justify-content: flex-start; }}
-    .hero {{ border-radius: 24px; }}
-    .hero-inner {{ padding: 36px 24px 28px; min-height: auto; }}
-    .hero-title {{ font-size: clamp(58px, 16vw, 92px); }}
+    .micro-pill:first-child {{ border-left: 0; padding-left: 0; }}
+    .hero-inner {{ padding: 36px 24px 30px; min-height: auto; }}
+    .hero-title {{ font-size: clamp(56px, 15vw, 90px); }}
+    .heat-summary {{ grid-template-columns: 1fr; gap: 14px; align-items: start; }}
     .action-strip {{ grid-template-columns: 1fr; }}
     .action-cell {{ border-right: 0; border-bottom: 1px solid {t['border']}; }}
     .action-cell:last-child {{ border-bottom: 0; }}
@@ -527,9 +586,13 @@ div[role="radiogroup"] label:has(input:checked) {{
     .index-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
     .performance-stats, .learn-grid {{ grid-template-columns: 1fr; }}
 }}
-@media (max-width: 520px) {{
-    .hero-title {{ font-size: 54px; }}
-    .score-console {{ padding: 18px; min-height: 380px; }}
+@media (max-width: 540px) {{
+    .hero-title {{ font-size: 50px; }}
+    .score-console {{ padding: 21px; min-height: auto; box-shadow: 7px 7px 0 {t['lime']}; }}
+    .heat-labels {{ gap: 7px; }}
+    .heat-label b {{ font-size: 11px; }}
+    .heat-label span {{ display: none; }}
+    .console-meta {{ flex-direction: column; gap: 7px; }}
     .index-grid {{ grid-template-columns: 1fr; }}
     .stTabs [data-baseweb="tab-list"] {{ width: 100%; overflow-x: auto; }}
 }}
@@ -1043,13 +1106,16 @@ def build_heat_score(vix, rsi, distance_200d, put_call):
 
 
 def recommendation(score):
-    """One internally consistent buy-sizing policy for extra cash,
-    expressed as a weather report a beginner can act on."""
+    """One consistent buy-sizing policy for optional extra cash.
+
+    The language is intentionally plain: the headline tells a beginner exactly
+    what to do, while the underlying thresholds remain unchanged.
+    """
     if score is None:
         return {
             "weather": "Unknown",
-            "verdict": "Stick to your normal plan.",
-            "copy": "Today's data is incomplete, so the honest answer is the boring one: follow your usual schedule until the numbers refresh.",
+            "verdict": "Stay with your normal plan.",
+            "copy": "Today's data is incomplete. Keep your normal automatic investing schedule and wait for the signal to refresh before changing any optional extra buy.",
             "extra_buy": "100% of your usual extra amount",
             "hold": "No change",
             "avoid": "Guessing from missing data",
@@ -1057,8 +1123,8 @@ def recommendation(score):
     if score <= 20:
         return {
             "weather": "Cold",
-            "verdict": "A good day to buy extra.",
-            "copy": "The market is fearful, and fear is when long-term buyers historically get better prices. Buying more than usual is reasonable — just don't empty the tank in one day.",
+            "verdict": "Buy more than usual.",
+            "copy": "The market looks fearful and prices are more attractive for a long-term buyer. Adding more than usual can make sense, but keep some cash available in case prices fall further.",
             "extra_buy": "150–200% of your usual extra amount",
             "hold": "Keep some cash for another drop",
             "avoid": "Going all-in at once",
@@ -1066,17 +1132,17 @@ def recommendation(score):
     if score <= 35:
         return {
             "weather": "Cool",
-            "verdict": "Lean in a little.",
-            "copy": "Conditions look a bit better than normal for buyers. A modestly larger buy makes sense; trying to catch the exact bottom does not.",
+            "verdict": "Buy a little more.",
+            "copy": "Conditions look better than normal for buyers. A somewhat larger extra buy is reasonable, while still spreading your money across more than one day.",
             "extra_buy": "125–150% of your usual extra amount",
             "hold": "Save the rest for future buys",
-            "avoid": "Trying to time the exact bottom",
+            "avoid": "Trying to catch the exact bottom",
         }
     if score <= 65:
         return {
             "weather": "Mild",
-            "verdict": "Buy your normal amount.",
-            "copy": "Nothing unusual is happening — the market isn't fearful and it isn't overheated. The best move is the boring one: stay on your plan.",
+            "verdict": "Buy as usual.",
+            "copy": "The market looks balanced—not especially cheap and not especially stretched. Keep your automatic investing and any normal extra buy exactly on schedule.",
             "extra_buy": "100% of your usual extra amount",
             "hold": "Follow your existing schedule",
             "avoid": "Inventing a clever trade",
@@ -1084,21 +1150,31 @@ def recommendation(score):
     if score <= 80:
         return {
             "weather": "Warm",
-            "verdict": "Go easy on extra buys.",
-            "copy": "The market has been running warm. Keep your automatic investing exactly as it is, but size any extra buy smaller and spread the rest over coming weeks.",
+            "verdict": "Buy a little less.",
+            "copy": "The market is running warm. Keep your automatic investing unchanged, but use only part of your optional extra cash today and spread the rest over the coming weeks.",
             "extra_buy": "25–50% of your usual extra amount",
             "hold": "Stage the rest into later buys",
             "avoid": "Chasing a strong run",
         }
     return {
         "weather": "Hot",
-        "verdict": "Not the day to chase.",
-        "copy": "Prices are stretched and optimism is loud. Your automatic investing keeps going — that never changes — but forcing a big extra buy here is how people overpay.",
+        "verdict": "Skip the extra buy today.",
+        "copy": "Prices look stretched and optimism is high. Keep your automatic investing unchanged, but wait before putting a large amount of optional extra cash to work.",
         "extra_buy": "0–25% of your usual extra amount",
         "hold": "Wait for scheduled buys or a pullback",
-        "avoid": "FOMO-driven lump sums",
+        "avoid": "A FOMO-driven lump sum",
     }
 
+
+def heat_stage(score):
+    """Map the 0–100 score to the three beginner-facing stages."""
+    if score is None:
+        return "Signal unavailable"
+    if score <= 35:
+        return "Fear / On Sale"
+    if score <= 65:
+        return "Normal"
+    return "Overstretched"
 
 def confidence_summary(signal_frame):
     available = signal_frame[signal_frame["Available"]]
@@ -1196,7 +1272,7 @@ def make_return_chart(return_table, period, title, theme, benchmark_return=None)
             annotation_font_size=10,
         )
 
-    figure.add_vline(x=0, line_width=1, line_color="rgba(255,255,255,.20)")
+    figure.add_vline(x=0, line_width=1, line_color=theme["border2"])
     figure.update_layout(
         title={"text": title.upper(), "x": 0.01, "xanchor": "left", "font": {"size": 12, "family": "IBM Plex Mono", "color": theme["muted"]}},
         height=max(390, 50 * len(chart) + 110),
@@ -1210,7 +1286,7 @@ def make_return_chart(return_table, period, title, theme, benchmark_return=None)
         xaxis={
             "title": None,
             "ticksuffix": "%",
-            "gridcolor": "rgba(255,255,255,.065)",
+            "gridcolor": theme["grid"],
             "zeroline": False,
             "tickfont": {"family": "IBM Plex Mono", "size": 10, "color": theme["muted2"]},
         },
@@ -1357,7 +1433,7 @@ if technical is None:
     st.markdown(
         """
 <div class="top-rail">
-  <div class="brand"><span class="brand-mark"></span><span class="brand-name">SHOULD I BUY TODAY? // MARKET WEATHER</span></div>
+  <div class="brand"><span class="brand-mark"></span><span class="brand-name">SHOULD I BUY TODAY?</span></div>
 </div>
 <div class="hero" style="min-height:420px;">
   <div class="hero-inner" style="min-height:420px;grid-template-columns:1fr;">
@@ -1383,6 +1459,7 @@ score, signal_frame = build_heat_score(
     put_call,
 )
 plan = recommendation(score)
+stage = heat_stage(score)
 confidence, available_count, confidence_reason = confidence_summary(signal_frame)
 latest_market_date = technical["latest_date"]
 market_age_days = max(0, (NOW_PT.date() - latest_market_date.date()).days)
@@ -1399,8 +1476,8 @@ with rail_left:
 <div class="top-rail">
   <div class="brand">
     <span class="brand-mark"></span>
-    <span class="brand-name">SHOULD I BUY TODAY? // MARKET WEATHER</span>
-    <span class="brand-slash">LONG-TERM INDEX SIGNAL</span>
+    <span class="brand-name">SHOULD I BUY TODAY?</span>
+    <span class="brand-slash">MARKET WEATHER / LONG-TERM INDEX INVESTING</span>
   </div>
   <div class="top-status">
     <span class="micro-pill"><span class="live-dot"></span>LIVE MODEL</span>
@@ -1416,23 +1493,23 @@ if market_age_days > 4:
     st.warning(f"Market prices are {market_age_days} calendar days old. Treat this signal as stale until the feed refreshes.")
 
 # ============================================================
-# Immersive hero
+# Bright hero + three-stage score bar
 # ============================================================
 weather_palette = {
-    "Cold": (theme["green"], theme["cyan"]),
-    "Cool": (theme["cyan"], theme["green"]),
-    "Mild": (theme["violet"], theme["cyan"]),
-    "Warm": (theme["amber"], theme["pink"]),
-    "Hot": (theme["coral"], theme["amber"]),
+    "Cold": (theme["green"], theme["lime"]),
+    "Cool": (theme["cyan"], theme["green2"]),
+    "Mild": (theme["blue"], theme["cyan"]),
+    "Warm": (theme["violet"], theme["pink"]),
+    "Hot": (theme["coral"], theme["orange"]),
 }
-weather_a, weather_b = weather_palette.get(plan["weather"], (theme["violet"], theme["cyan"]))
+weather_a, weather_b = weather_palette.get(plan["weather"], (theme["blue"], theme["green"]))
 
 verdict_lines = {
     "Cold": ("BUY", "MORE."),
-    "Cool": ("LEAN", "IN."),
-    "Mild": ("BUY", "NORMAL."),
-    "Warm": ("SIZE", "DOWN."),
-    "Hot": ("DON'T", "CHASE."),
+    "Cool": ("BUY A", "LITTLE MORE."),
+    "Mild": ("BUY AS", "USUAL."),
+    "Warm": ("BUY A", "LITTLE LESS."),
+    "Hot": ("SKIP THE", "EXTRA BUY."),
 }.get(plan["weather"], ("STAY", "STEADY."))
 
 st.markdown(
@@ -1447,22 +1524,35 @@ st.markdown(
         <span class="line gradient-word">{verdict_lines[1]}</span>
       </div>
       <div class="hero-description">{plan['copy']}</div>
-      <div class="hero-rule"><span class="rule-icon">✓</span><span>Your automatic investing stays untouched. This only sizes optional extra cash.</span></div>
+      <div class="hero-rule"><span class="rule-icon">✓</span><span>Your automatic investing stays unchanged. This only applies to optional extra cash.</span></div>
     </div>
     <div class="score-console">
       <div class="console-top"><span class="console-label">Market heat index</span><span class="weather-chip">{plan['weather']}</span></div>
-      <div class="score-orbit" style="--score:{score};">
-        <div class="score-core"><div class="score-number">{score}</div><div class="score-denom">OF 100 / HEAT</div></div>
+      <div class="heat-summary">
+        <div class="score-number">{score}</div>
+        <div><div class="score-stage">{stage}</div><div class="score-denom">OUT OF 100 / HIGHER MEANS MORE STRETCHED</div></div>
       </div>
-      <div class="console-scale"><span class="scale-segment"></span><span class="scale-segment"></span><span class="scale-segment"></span></div>
-      <div class="console-meta"><span>FEARFUL / BETTER PRICES</span><span>STRETCHED / OVERPAY RISK</span></div>
-      <div class="console-meta"><span>CONFIDENCE / {confidence.upper()}</span><span>REFRESH / {refresh_label}</span></div>
+      <div class="heat-bar-wrap">
+        <div class="heat-track" style="--score:{score};">
+          <span class="heat-zone fear"></span>
+          <span class="heat-zone normal"></span>
+          <span class="heat-zone stretched"></span>
+          <span class="heat-marker" data-score="{score}"></span>
+        </div>
+        <div class="heat-ticks"><span>0</span><span>35</span><span>65</span><span>100</span></div>
+        <div class="heat-labels">
+          <div class="heat-label fear"><b>Fear / On Sale</b><span>Lower prices; better conditions for adding extra cash.</span></div>
+          <div class="heat-label normal"><b>Normal</b><span>Balanced conditions; stay with your usual plan.</span></div>
+          <div class="heat-label stretched"><b>Overstretched</b><span>Higher risk of overpaying after a strong run.</span></div>
+        </div>
+      </div>
+      <div class="console-meta"><span>CONFIDENCE / {confidence.upper()}</span><span>REFRESHED / {refresh_label}</span></div>
     </div>
   </div>
   <div class="action-strip">
-    <div class="action-cell"><div class="action-index">01 / DEPLOY</div><div class="action-label">Extra cash today</div><div class="action-value">{plan['extra_buy']}</div><div class="action-help">Relative to the extra amount you would normally invest.</div></div>
-    <div class="action-cell"><div class="action-index">02 / RESERVE</div><div class="action-label">Keep flexibility</div><div class="action-value">{plan['hold']}</div><div class="action-help">A sequence of good decisions beats one heroic prediction.</div></div>
-    <div class="action-cell"><div class="action-index">03 / AVOID</div><div class="action-label">Behavioral trap</div><div class="action-value">{plan['avoid']}</div><div class="action-help">No sell signal. No market prophecy. No interruption to DCA.</div></div>
+    <div class="action-cell"><div class="action-index">01 / BUY TODAY</div><div class="action-label">Optional extra cash</div><div class="action-value">{plan['extra_buy']}</div><div class="action-help">Relative to the extra amount you would normally invest.</div></div>
+    <div class="action-cell"><div class="action-index">02 / KEEP FLEXIBLE</div><div class="action-label">What to do with the rest</div><div class="action-value">{plan['hold']}</div><div class="action-help">Several good decisions are better than one heroic prediction.</div></div>
+    <div class="action-cell"><div class="action-index">03 / AVOID</div><div class="action-label">Behavioral trap</div><div class="action-value">{plan['avoid']}</div><div class="action-help">No sell signal, no market prophecy, and no interruption to your automatic plan.</div></div>
   </div>
 </div>
 """,
@@ -1604,7 +1694,7 @@ When an input is unavailable, it is replaced with a neutral 50 and confidence dr
         figure.add_trace(
             go.Scatter(
                 x=history["Date"], y=history["Close"], mode="lines", name=technical["source_label"],
-                line={"color": theme["cyan"], "width": 2.4}, fill="tozeroy", fillcolor="rgba(69,231,255,.045)"
+                line={"color": theme["cyan"], "width": 2.4}, fill="tozeroy", fillcolor="rgba(0,167,183,.08)"
             )
         )
         figure.add_trace(
@@ -1618,8 +1708,8 @@ When an input is unavailable, it is replaced with a neutral 50 and confidence dr
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
             font={"color": theme["text"], "family": "DM Sans, sans-serif"},
             margin={"l": 8, "r": 8, "t": 22, "b": 8}, legend={"orientation": "h", "y": 1.08}, hovermode="x unified",
-            xaxis={"gridcolor": "rgba(255,255,255,.06)", "zeroline": False},
-            yaxis={"gridcolor": "rgba(255,255,255,.06)", "zeroline": False},
+            xaxis={"gridcolor": theme["grid"], "zeroline": False},
+            yaxis={"gridcolor": theme["grid"], "zeroline": False},
             hoverlabel={"bgcolor": theme["surface3"], "font_color": theme["text"]},
         )
         st.plotly_chart(figure, use_container_width=True, config={"displayModeBar": False})
@@ -1644,8 +1734,8 @@ When an input is unavailable, it is replaced with a neutral 50 and confidence dr
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                 font={"color": theme["text"], "family": "DM Sans, sans-serif"},
                 margin={"l": 8, "r": 8, "t": 22, "b": 8},
-                xaxis={"gridcolor": "rgba(255,255,255,.06)"},
-                yaxis={"ticksuffix": "%", "gridcolor": "rgba(255,255,255,.06)"},
+                xaxis={"gridcolor": theme["grid"]},
+                yaxis={"ticksuffix": "%", "gridcolor": theme["grid"]},
                 hoverlabel={"bgcolor": theme["surface3"], "font_color": theme["text"]},
             )
             st.plotly_chart(curve_figure, use_container_width=True, config={"displayModeBar": False})
