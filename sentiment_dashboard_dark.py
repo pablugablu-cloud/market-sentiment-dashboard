@@ -39,10 +39,9 @@ PACIFIC = ZoneInfo("America/Los_Angeles")
 NOW_PT = datetime.now(PACIFIC)
 
 # ============================================================
-# Visual system — bright by default, optional dark mode
+# Visual system — bright, editorial, grid-led, modern
 # ============================================================
-LIGHT = {
-    "color_scheme": "light",
+THEME = {
     "bg": "#EEF1EF",
     "surface": "#F8FAF8",
     "surface2": "#FFFFFF",
@@ -71,100 +70,10 @@ LIGHT = {
     "pink": "#E7439C",
     "orange": "#D96620",
     "shadow": "0 24px 70px rgba(20,34,25,.12)",
-    "button_hover": "#006F25",
-    "on_accent": "#FFFFFF",
-    "hero_rule_bg": "rgba(255,255,255,.75)",
-    "orb_highlight": "rgba(255,255,255,.70)",
-    "console_bg": "linear-gradient(135deg, rgba(104,71,232,.11), rgba(255,255,255,.95) 38%, rgba(0,138,46,.07))",
-    "marker_ring": "rgba(255,255,255,.74)",
-    "soft_shadow": "rgba(7,9,8,.055)",
-    "soft_shadow_hover": "rgba(7,9,8,.08)",
-    "neutral_pill": "rgba(7,9,8,.06)",
-    "signal_viz_bg": "rgba(255,255,255,.45)",
-    "action1": "#E7F4CC",
-    "action2": "#E7E4FF",
-    "action3": "#F7DCD0",
-    "signal1": "#EDF7DF",
-    "signal2": "#E9F3FF",
-    "signal3": "#F0EBFF",
-    "signal4": "#FCEDE5",
-    "summary1": "#E7F4CC",
-    "summary2": "#F7DCD0",
-    "summary3": "#E7E4FF",
-    "tape1": "#E7F4CC",
-    "tape2": "#171426",
-    "tape3": "#D8C9FF",
-    "tape4": "#F3A9C7",
-    "tape5": "#E9A06F",
-    "fear_end": "#57E7A1",
-    "normal_start": "#55D7E5",
 }
-
-DARK = {
-    "color_scheme": "dark",
-    "bg": "#0D1117",
-    "surface": "#11161D",
-    "surface2": "#151B23",
-    "surface3": "#1B222C",
-    "text": "#F4F7F5",
-    "muted": "#A7B0AB",
-    "muted2": "#7F8A84",
-    "border": "#303A34",
-    "border2": "#56635B",
-    "grid": "rgba(255,255,255,.055)",
-    "green": "#3FB950",
-    "green2": "#56D364",
-    "green_bg": "rgba(63,185,80,.13)",
-    "lime": "#B7F34B",
-    "lime_bg": "rgba(183,243,75,.14)",
-    "violet": "#A78BFA",
-    "violet_bg": "rgba(167,139,250,.14)",
-    "cyan": "#39C5CF",
-    "cyan_bg": "rgba(57,197,207,.13)",
-    "blue": "#58A6FF",
-    "blue_bg": "rgba(88,166,255,.13)",
-    "amber": "#DDBD43",
-    "amber_bg": "rgba(221,189,67,.13)",
-    "coral": "#FF7B72",
-    "coral_bg": "rgba(255,123,114,.13)",
-    "pink": "#F778BA",
-    "orange": "#FFA657",
-    "shadow": "0 24px 70px rgba(0,0,0,.40)",
-    "button_hover": "#2EA043",
-    "on_accent": "#FFFFFF",
-    "hero_rule_bg": "rgba(21,27,35,.88)",
-    "orb_highlight": "rgba(255,255,255,.16)",
-    "console_bg": "linear-gradient(135deg, rgba(167,139,250,.18), rgba(21,27,35,.96) 40%, rgba(63,185,80,.11))",
-    "marker_ring": "rgba(13,17,23,.82)",
-    "soft_shadow": "rgba(0,0,0,.24)",
-    "soft_shadow_hover": "rgba(0,0,0,.36)",
-    "neutral_pill": "rgba(255,255,255,.07)",
-    "signal_viz_bg": "rgba(255,255,255,.035)",
-    "action1": "#17251A",
-    "action2": "#1C1A32",
-    "action3": "#2A1D18",
-    "signal1": "#15231A",
-    "signal2": "#142231",
-    "signal3": "#211B35",
-    "signal4": "#2B1D19",
-    "summary1": "#17251A",
-    "summary2": "#2A1D18",
-    "summary3": "#1C1A32",
-    "tape1": "#17251A",
-    "tape2": "#080B10",
-    "tape3": "#241E39",
-    "tape4": "#35202D",
-    "tape5": "#342217",
-    "fear_end": "#57E7A1",
-    "normal_start": "#55D7E5",
-}
-
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = False
-
 
 def current_theme():
-    return DARK if st.session_state.dark_mode else LIGHT
+    return THEME
 
 
 def inject_css(t):
@@ -173,7 +82,7 @@ def inject_css(t):
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-:root {{ color-scheme: {t['color_scheme']}; }}
+:root {{ color-scheme: light; }}
 * {{ box-sizing: border-box; }}
 html {{ scroll-behavior: smooth; }}
 html, body, [class*="css"], .stApp, .stMarkdown, p, span, div, label {{
@@ -198,7 +107,7 @@ div[data-testid="stButton"] button {{
     border: 1px solid {t['green']};
     border-radius: 2px;
     background: {t['green']};
-    color: {t['on_accent']};
+    color: #FFFFFF;
     font-family: "Space Grotesk", sans-serif;
     font-weight: 650;
     letter-spacing: -.01em;
@@ -207,44 +116,11 @@ div[data-testid="stButton"] button {{
 }}
 div[data-testid="stButton"] button:hover {{
     transform: translateY(-2px);
-    background: {t['button_hover']};
-    color: {t['on_accent']};
+    background: #006F25;
+    color: #FFFFFF;
     box-shadow: 0 10px 24px rgba(0,138,46,.18);
 }}
 div[data-testid="stButton"] button:focus-visible {{ outline: 3px solid {t['lime']}; outline-offset: 3px; }}
-
-/* Native, always-visible theme switch beside Refresh */
-.st-key-dark_mode {{
-    min-height: 62px;
-    display: flex;
-    align-items: center;
-    padding: 0 14px;
-    border: 1px solid {t['border']};
-    border-bottom: 0;
-    background: {t['surface3']};
-}}
-.st-key-dark_mode [data-testid="stToggle"] {{
-    width: 100%;
-    margin: 0;
-}}
-.st-key-dark_mode label {{
-    width: 100%;
-    justify-content: space-between;
-    gap: 10px;
-}}
-.st-key-dark_mode label p {{
-    color: {t['text']} !important;
-    font-family: "IBM Plex Mono", monospace !important;
-    font-size: 9px !important;
-    font-weight: 700 !important;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    white-space: nowrap;
-}}
-.st-key-refresh_market button {{
-    min-height: 62px !important;
-    border-bottom: 0 !important;
-}}
 
 .stTabs [data-baseweb="tab-list"] {{
     gap: 0;
@@ -276,7 +152,7 @@ div[role="radiogroup"] label {{
     transition: border-color .18s ease, background .18s ease, transform .18s ease;
 }}
 div[role="radiogroup"] label:hover {{ transform: translateY(-1px); border-color: {t['green']}; }}
-div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; color: {t['on_accent']}; border-color: {t['text']}; }}
+div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; color: #FFFFFF; border-color: {t['text']}; }}
 [data-testid="stExpander"] {{
     border: 1px solid {t['border']} !important;
     border-radius: 0 !important;
@@ -350,7 +226,7 @@ div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; colo
     right: -170px; top: -260px;
     border-radius: 50%;
     background:
-        radial-gradient(circle at 36% 35%, {t['orb_highlight']}, transparent 14%),
+        radial-gradient(circle at 36% 35%, rgba(255,255,255,.70), transparent 14%),
         radial-gradient(circle at 42% 42%, var(--weather-b), var(--weather-a) 46%, transparent 72%);
     filter: blur(4px);
     opacity: .22;
@@ -413,7 +289,7 @@ div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; colo
     margin-top: 25px;
     padding: 12px 14px;
     border: 1px solid {t['border']};
-    background: {t['hero_rule_bg']};
+    background: rgba(255,255,255,.75);
     color: {t['text']};
     font-size: 13px;
     font-weight: 650;
@@ -437,7 +313,8 @@ div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; colo
     padding: 28px;
     border: 1px solid {t['border2']};
     border-radius: 0;
-    background: {t['console_bg']};
+    background:
+        linear-gradient(135deg, rgba(104,71,232,.11), rgba(255,255,255,.95) 38%, rgba(0,138,46,.07));
     box-shadow: 14px 14px 0 {t['lime']};
     animation: consoleIn .9s cubic-bezier(.16,1,.3,1) .18s both;
 }}
@@ -474,8 +351,8 @@ div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; colo
     background: {t['surface2']};
 }}
 .heat-zone {{ min-width: 0; }}
-.heat-zone.fear {{ background: linear-gradient(90deg, {t['lime']}, {t['fear_end']}); }}
-.heat-zone.normal {{ background: linear-gradient(90deg, {t['normal_start']}, {t['blue']}); border-left: 3px solid {t['surface2']}; border-right: 3px solid {t['surface2']}; }}
+.heat-zone.fear {{ background: linear-gradient(90deg, {t['lime']}, #57E7A1); }}
+.heat-zone.normal {{ background: linear-gradient(90deg, #55D7E5, {t['blue']}); border-left: 3px solid {t['surface2']}; border-right: 3px solid {t['surface2']}; }}
 .heat-zone.stretched {{ background: linear-gradient(90deg, {t['violet']}, {t['pink']}, {t['coral']}); }}
 .heat-marker {{
     position: absolute;
@@ -486,7 +363,7 @@ div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; colo
     height: 31px;
     transform: translate(-50%, -50%);
     background: {t['text']};
-    box-shadow: 0 0 0 4px {t['marker_ring']};
+    box-shadow: 0 0 0 4px rgba(255,255,255,.74);
     animation: markerSlide .9s cubic-bezier(.16,1,.3,1) .45s both;
 }}
 .heat-marker::before {{
@@ -498,7 +375,7 @@ div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; colo
     padding: 5px 7px;
     border-radius: 999px;
     background: {t['text']};
-    color: {t['on_accent']};
+    color: #FFFFFF;
     text-align: center;
     font-family: "IBM Plex Mono", monospace;
     font-size: 10px;
@@ -535,9 +412,9 @@ div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; colo
     min-height: 138px;
     transition: transform .2s ease, filter .2s ease;
 }}
-.action-cell:nth-child(1) {{ background: {t['action1']}; }}
-.action-cell:nth-child(2) {{ background: {t['action2']}; }}
-.action-cell:nth-child(3) {{ background: {t['action3']}; }}
+.action-cell:nth-child(1) {{ background: #E7F4CC; }}
+.action-cell:nth-child(2) {{ background: #E7E4FF; }}
+.action-cell:nth-child(3) {{ background: #F7DCD0; }}
 .action-cell:last-child {{ border-right: 0; }}
 .action-cell:hover {{ transform: translateY(-4px); filter: saturate(1.06); z-index: 2; }}
 .action-index {{ color: {t['green']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600; }}
@@ -561,12 +438,12 @@ div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; colo
     border-right: 1px solid {t['border']};
     color: {t['muted']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; white-space: nowrap;
 }}
-.tape-item:nth-child(5n+1) {{ background: {t['tape1']}; }}
-.tape-item:nth-child(5n+2) {{ background: {t['tape2']}; color: {t['on_accent']}; }}
-.tape-item:nth-child(5n+3) {{ background: {t['tape3']}; }}
-.tape-item:nth-child(5n+4) {{ background: {t['tape4']}; }}
-.tape-item:nth-child(5n+5) {{ background: {t['tape5']}; }}
-.tape-item:nth-child(5n+2) .tape-ticker {{ color: {t['on_accent']}; }}
+.tape-item:nth-child(5n+1) {{ background: #E7F4CC; }}
+.tape-item:nth-child(5n+2) {{ background: #171426; color: #FFFFFF; }}
+.tape-item:nth-child(5n+3) {{ background: #D8C9FF; }}
+.tape-item:nth-child(5n+4) {{ background: #F3A9C7; }}
+.tape-item:nth-child(5n+5) {{ background: #E9A06F; }}
+.tape-item:nth-child(5n+2) .tape-ticker {{ color: #FFFFFF; }}
 .tape-ticker {{ color: {t['text']}; font-weight: 700; }}
 .tape-sep {{ color: {t['muted2']}; }}
 
@@ -589,14 +466,14 @@ div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; colo
     position: relative; overflow: hidden; min-height: 270px; padding: 25px;
     border: 1px solid {t['border']}; border-radius: 0;
     background: {t['surface2']};
-    box-shadow: 8px 8px 0 {t['soft_shadow']};
+    box-shadow: 8px 8px 0 rgba(7,9,8,.055);
     transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
 }}
-.signal-card:nth-child(1) {{ grid-column: span 5; background: {t['signal1']}; }}
-.signal-card:nth-child(2) {{ grid-column: span 7; background: {t['signal2']}; }}
-.signal-card:nth-child(3) {{ grid-column: span 7; background: {t['signal3']}; }}
-.signal-card:nth-child(4) {{ grid-column: span 5; background: {t['signal4']}; }}
-.signal-card:hover {{ transform: translateY(-5px); border-color: {t['border2']}; box-shadow: 12px 12px 0 {t['soft_shadow_hover']}; }}
+.signal-card:nth-child(1) {{ grid-column: span 5; background: #EDF7DF; }}
+.signal-card:nth-child(2) {{ grid-column: span 7; background: #E9F3FF; }}
+.signal-card:nth-child(3) {{ grid-column: span 7; background: #F0EBFF; }}
+.signal-card:nth-child(4) {{ grid-column: span 5; background: #FCEDE5; }}
+.signal-card:hover {{ transform: translateY(-5px); border-color: {t['border2']}; box-shadow: 12px 12px 0 rgba(7,9,8,.08); }}
 .signal-card::after {{ content: ""; position: absolute; width: 220px; height: 220px; right: -110px; bottom: -130px; border-radius: 50%; background: var(--signal-color); filter: blur(70px); opacity: .12; }}
 .signal-number {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 10px; }}
 .signal-question {{ margin-top: 35px; color: {t['muted']}; font-size: 13px; }}
@@ -607,8 +484,8 @@ div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; colo
 .pill-green {{ color: {t['green']}; background: {t['green_bg']}; }}
 .pill-amber {{ color: {t['amber']}; background: {t['amber_bg']}; }}
 .pill-coral {{ color: {t['coral']}; background: {t['coral_bg']}; }}
-.pill-muted {{ color: {t['muted']}; background: {t['neutral_pill']}; }}
-.signal-viz {{ position: absolute; right: 22px; top: 22px; width: 84px; height: 84px; border: 1px solid {t['border2']}; border-radius: 50%; background: {t['signal_viz_bg']}; }}
+.pill-muted {{ color: {t['muted']}; background: rgba(7,9,8,.06); }}
+.signal-viz {{ position: absolute; right: 22px; top: 22px; width: 84px; height: 84px; border: 1px solid {t['border2']}; border-radius: 50%; background: rgba(255,255,255,.45); }}
 .signal-viz::before, .signal-viz::after {{ content: ""; position: absolute; border-radius: 50%; inset: 12px; border: 1px solid var(--signal-color); opacity: .45; }}
 .signal-viz::after {{ inset: 29px; background: var(--signal-color); box-shadow: 0 0 22px color-mix(in srgb, var(--signal-color) 40%, transparent); opacity: .85; animation: livePulse 2.6s ease-in-out infinite; }}
 
@@ -643,19 +520,19 @@ div[role="radiogroup"] label:has(input:checked) {{ background: {t['text']}; colo
 .performance-intro b {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; }}
 .performance-stats {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 0 6px; }}
 .summary-card {{ position: relative; overflow: hidden; min-height: 100px; border: 1px solid {t['border']}; border-radius: 0; padding: 16px; background: {t['surface3']}; }}
-.summary-card:nth-child(1) {{ background: {t['summary1']}; }}
-.summary-card:nth-child(2) {{ background: {t['summary2']}; }}
-.summary-card:nth-child(3) {{ background: {t['summary3']}; }}
+.summary-card:nth-child(1) {{ background: #E7F4CC; }}
+.summary-card:nth-child(2) {{ background: #F7DCD0; }}
+.summary-card:nth-child(3) {{ background: #E7E4FF; }}
 .summary-label {{ color: {t['muted2']}; font-family: "IBM Plex Mono", monospace; font-size: 9px; text-transform: uppercase; letter-spacing: .09em; }}
 .summary-value {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 18px; font-weight: 650; margin-top: 11px; letter-spacing: -.025em; }}
 
 /* Learn panel */
 .learn-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }}
 .learn-item {{ border: 1px solid {t['border']}; border-radius: 0; padding: 18px; background: {t['surface2']}; }}
-.learn-item:nth-child(1) {{ background: {t['signal1']}; }}
-.learn-item:nth-child(2) {{ background: {t['signal2']}; }}
-.learn-item:nth-child(3) {{ background: {t['signal3']}; }}
-.learn-item:nth-child(4) {{ background: {t['signal4']}; }}
+.learn-item:nth-child(1) {{ background: #EDF7DF; }}
+.learn-item:nth-child(2) {{ background: #E9F3FF; }}
+.learn-item:nth-child(3) {{ background: #F0EBFF; }}
+.learn-item:nth-child(4) {{ background: #FCEDE5; }}
 .learn-q {{ color: {t['text']}; font-family: "Space Grotesk", sans-serif; font-size: 17px; font-weight: 650; letter-spacing: -.025em; }}
 .learn-a {{ color: {t['muted']}; font-size: 13px; line-height: 1.55; margin-top: 8px; }}
 
@@ -1480,8 +1357,8 @@ def section_header(kicker, title, copy):
     )
 
 
-def render_core_index_cards(prices, theme):
-    accents = [theme["lime"], theme["cyan"], theme["violet"], theme["pink"], theme["amber"]]
+def render_core_index_cards(prices):
+    accents = [THEME["lime"], THEME["cyan"], THEME["violet"], THEME["pink"], THEME["amber"]]
     cards = []
     for i, (name, ticker) in enumerate(CORE_INDEXES.items()):
         if ticker not in prices.columns:
@@ -1539,15 +1416,9 @@ def render_ticker_tape(prices):
 theme = current_theme()
 inject_css(theme)
 
-rail_left, rail_mode, rail_right = st.columns(
-    [0.68, 0.15, 0.17],
-    gap="small",
-    vertical_alignment="center",
-)
-with rail_mode:
-    st.toggle("Dark mode", key="dark_mode")
+rail_left, rail_right = st.columns([0.84, 0.16])
 with rail_right:
-    if st.button("↻  Refresh market", key="refresh_market", use_container_width=True):
+    if st.button("↻  Refresh market", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
@@ -1610,7 +1481,6 @@ with rail_left:
   </div>
   <div class="top-status">
     <span class="micro-pill"><span class="live-dot"></span>LIVE MODEL</span>
-    <span class="micro-pill">THEME / {'DARK' if st.session_state.dark_mode else 'LIGHT'}</span>
     <span class="micro-pill">PRICES / {market_date_label}</span>
     <span class="micro-pill">INPUTS / {available_count} OF 4</span>
   </div>
@@ -1743,7 +1613,7 @@ section_header(
     "The building blocks, at a glance.",
     "The broad assets most index investors actually own. Adjusted prices include distributions where the data source provides them.",
 )
-render_core_index_cards(market_prices, theme)
+render_core_index_cards(market_prices)
 
 # ============================================================
 # Performance lab
