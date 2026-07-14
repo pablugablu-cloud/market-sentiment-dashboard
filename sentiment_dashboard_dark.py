@@ -40,7 +40,7 @@ PACIFIC = ZoneInfo("America/Los_Angeles")
 NOW_PT = datetime.now(PACIFIC)
 
 if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = True
+    st.session_state.dark_mode = False
 
 
 # ============================================================
@@ -67,6 +67,7 @@ LIGHT = {
     "meter_green": "#7FBFA2",
     "meter_amber": "#E4C27E",
     "meter_coral": "#DE9AA3",
+    "pulse": "rgba(27,36,50,.30)",
 }
 
 DARK = {
@@ -90,6 +91,7 @@ DARK = {
     "meter_green": "#2E6B51",
     "meter_amber": "#8A6A2A",
     "meter_coral": "#7E4550",
+    "pulse": "rgba(241,239,233,.32)",
 }
 
 
@@ -216,8 +218,13 @@ div[role="radiogroup"] label {{
     font-family: "IBM Plex Mono", monospace;
     font-size: 10.5px;
     white-space: nowrap;
+    animation: fadeUp .45s cubic-bezier(.2,.8,.2,1) both;
 }}
-.status-dot {{ width: 6px; height: 6px; border-radius: 999px; background: {t['green']}; }}
+.freshness .meta-pill:nth-child(1) {{ animation-delay: .05s; }}
+.freshness .meta-pill:nth-child(2) {{ animation-delay: .13s; }}
+.freshness .meta-pill:nth-child(3) {{ animation-delay: .21s; }}
+.freshness .meta-pill:nth-child(4) {{ animation-delay: .29s; }}
+.status-dot {{ width: 6px; height: 6px; border-radius: 999px; background: {t['green']}; animation: dotBlink 3.2s ease-in-out 1s 3; }}
 
 /* ---------- Hero: today's report ---------- */
 .report-card {{
@@ -250,7 +257,10 @@ div[role="radiogroup"] label {{
     letter-spacing: -1.2px;
     color: {t['text']};
     margin-top: 12px;
-    animation: fadeUp .55s cubic-bezier(.2,.8,.2,1) .08s both;
+}}
+.verdict .w {{
+    display: inline-block;
+    animation: wordRise .62s cubic-bezier(.2,.85,.25,1) both;
 }}
 .verdict .accent {{ font-style: italic; }}
 .verdict-copy {{
@@ -275,12 +285,25 @@ div[role="radiogroup"] label {{
 
 /* ---------- Thermometer panel ---------- */
 .thermo-panel {{
+    position: relative;
+    overflow: hidden;
     border: 1px solid {t['border']};
     border-radius: 16px;
     background: {t['surface2']};
     padding: 22px 22px 18px;
     animation: fadeUp .55s cubic-bezier(.2,.8,.2,1) .14s both;
 }}
+.thermo-panel::before {{
+    content: "";
+    position: absolute;
+    width: 280px; height: 280px;
+    right: -100px; top: -120px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 50% 50%, var(--glow, transparent), transparent 66%);
+    pointer-events: none;
+    animation: glowDrift 9s ease-in-out infinite;
+}}
+.thermo-panel > * {{ position: relative; z-index: 1; }}
 .thermo-head {{
     display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
 }}
@@ -312,6 +335,7 @@ div[role="radiogroup"] label {{
     font-weight: 600;
     color: {t['text']};
     line-height: 1;
+    animation: scorePop .7s cubic-bezier(.16,.9,.3,1.25) .40s both;
 }}
 .thermo-track {{
     position: relative;
@@ -323,9 +347,21 @@ div[role="radiogroup"] label {{
         {t['meter_amber']} 35% 65%,
         {t['meter_coral']} 65% 100%);
 }}
+.thermo-track::after {{
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: linear-gradient(100deg, transparent 32%, rgba(255,255,255,.32) 50%, transparent 68%);
+    background-size: 250% 100%;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    animation: trackSheen 1.1s ease-out .55s 1 both;
+}}
 .thermo-marker {{
     --pos: 50%;
     position: absolute;
+    z-index: 2;
     top: 50%; left: var(--pos);
     width: 18px; height: 18px;
     transform: translate(-50%, -50%);
@@ -333,7 +369,9 @@ div[role="radiogroup"] label {{
     background: {t['text']};
     border: 3.5px solid {t['surface']};
     box-shadow: 0 3px 12px rgba(0,0,0,.25);
-    animation: markerGlide .8s cubic-bezier(.2,.85,.25,1) .35s both;
+    animation:
+        markerGlide .8s cubic-bezier(.2,.85,.25,1) .35s both,
+        markerLand 1.5s ease-out 1.25s 2;
 }}
 .thermo-labels {{
     display: flex; justify-content: space-between;
@@ -558,6 +596,40 @@ div[role="radiogroup"] label {{
 @keyframes markerGlide {{
     from {{ left: 0%; opacity: 0; }}
     to   {{ left: var(--pos); opacity: 1; }}
+}}
+@keyframes wordRise {{
+    from {{ opacity: 0; transform: translateY(.5em) rotate(1.2deg); filter: blur(3px); }}
+    to   {{ opacity: 1; transform: translateY(0) rotate(0); filter: blur(0); }}
+}}
+@keyframes scorePop {{
+    from {{ opacity: 0; transform: translateY(10px) scale(.7); }}
+    60%  {{ opacity: 1; transform: translateY(-2px) scale(1.07); }}
+    to   {{ opacity: 1; transform: translateY(0) scale(1); }}
+}}
+@keyframes trackSheen {{
+    from {{ background-position: 220% 0; }}
+    to   {{ background-position: -120% 0; }}
+}}
+@keyframes markerLand {{
+    0%   {{ box-shadow: 0 3px 12px rgba(0,0,0,.25), 0 0 0 0 {t['pulse']}; }}
+    100% {{ box-shadow: 0 3px 12px rgba(0,0,0,.25), 0 0 0 14px rgba(0,0,0,0); }}
+}}
+@keyframes glowDrift {{
+    0%, 100% {{ transform: translate(0, 0) scale(1); opacity: .45; }}
+    50%      {{ transform: translate(-20px, 16px) scale(1.12); opacity: .75; }}
+}}
+@keyframes dotBlink {{
+    0%, 100% {{ opacity: 1; }}
+    50%      {{ opacity: .3; }}
+}}
+
+/* Scroll-triggered reveals — modern browsers only; others show content normally */
+@supports (animation-timeline: view()) {{
+    .driver-card, .index-card {{
+        animation: fadeUp .6s cubic-bezier(.2,.8,.2,1) both;
+        animation-timeline: view();
+        animation-range: entry 5% entry 40%;
+    }}
 }}
 
 @media (max-width: 980px) {{
@@ -1431,17 +1503,34 @@ if market_age_days > 4:
 # Today's report (hero)
 # ============================================================
 marker = clamp(score, 0, 100) if score is not None else 50
+
+# Word-by-word verdict reveal
+verdict_words = " ".join(
+    f'<span class="w" style="animation-delay:{0.10 + i * 0.06:.2f}s">{word}</span>'
+    for i, word in enumerate(plan["verdict"].split())
+)
+
+# Ambient glow tinted by today's weather
+weather_hue = {
+    "Cold": theme["green"],
+    "Cool": theme["green"],
+    "Mild": theme["blue"],
+    "Warm": theme["amber"],
+    "Hot": theme["coral"],
+}.get(plan["weather"], theme["blue"])
+glow_style = f"--glow: color-mix(in srgb, {weather_hue} 26%, transparent);"
+
 st.markdown(
     f"""
 <div class="report-card">
   <div class="report-grid">
     <div>
       <div class="eyebrow">Today's report · {report_date_label}</div>
-      <div class="verdict">{plan['verdict']}</div>
+      <div class="verdict">{verdict_words}</div>
       <div class="verdict-copy">{plan['copy']}</div>
       <div class="guardrail">✓&nbsp; Your automatic investing never changes. This only sizes optional extra cash.</div>
     </div>
-    <div class="thermo-panel">
+    <div class="thermo-panel" style="{glow_style}">
       <div class="thermo-head">
         <div class="weather-word"><small>Market weather</small>{plan['weather']}</div>
         <div class="score-reading"><b>{score}</b>of 100</div>
