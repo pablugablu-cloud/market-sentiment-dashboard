@@ -2,27 +2,91 @@ name: Keep Streamlit App Awake
 
 on:
   schedule:
-    - cron: "17 */6 * * *"
+    # Run every 6 hours (UTC)
+    - cron: "23 */6 * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  ping-app:
+  keep-awake:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-      - name: Ping Streamlit health endpoint
-        run: |
-          curl \
-            --fail \
-            --silent \
-            --show-error \
-            --retry 3 \
-            --retry-delay 15 \
-            --max-time 180 \
-            "https://masenti.streamlit.app/_stcore/health"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-          echo
-          echo "Streamlit app is healthy."
+      - name: Install Playwright
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          playwright install chromium --with-deps
+
+      - name: Open app and wake it if needed
+        env:
+          APP_URL: "https://masenti.streamlit.app/"
+        run: |
+          python - <<'PY'
+          import asyncio
+          import os
+          import re
+          from playwright.async_api import async_playwright
+
+          async def main():
+              url = os.environ["APP_URL"]
+
+              async with async_playwright() as p:
+                  browser = await p.chromium.launch(headless=True)
+                  page = await browser.new_page()
+
+                  print(f"Opening {url}")
+                  await page.goto(
+                      url,
+                      wait_until="domcontentloaded",
+                      timeout=120_000,
+                  )
+                  await page.wait_for_timeout(8_000)
+
+                  wake_button = page.get_by_role(
+                      "button",
+                      name=re.compile(r"get this app back up", re.IGNORECASE),
+                  )
+
+                  if await wake_button.count() > 0:
+                      print("App is asleep. Clicking the wake-up button...")
+                      await wake_button.first.click()
+                      await page.wait_for_timeout(75_000)
+                  else:
+                      print("App is already awake.")
+
+                  # Reload once and verify the sleeping page is gone.
+                  await page.reload(
+                      wait_until="domcontentloaded",
+                      timeout=120_000,
+                  )
+                  await page.wait_for_timeout(12_000)
+
+                  body_text = (await page.locator("body").inner_text()).lower()
+                  still_asleep = (
+                      "this app has gone to sleep" in body_text
+                      or "get this app back up" in body_text
+                  )
+
+                  if still_asleep:
+                      await page.screenshot(
+                          path="streamlit-wake-failure.png",
+                          full_page=True,
+                      )
+                      raise RuntimeError(
+                          "Streamlit app is still showing the sleeping page."
+                      )
+
+                  print("Success: the app responded as awake.")
+                  await browser.close()
+
+          asyncio.run(main())
+          PY
